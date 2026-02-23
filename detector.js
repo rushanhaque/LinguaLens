@@ -1,18 +1,13 @@
-// ==========================================================
-//  LINGUALENS — Detection Pipeline
-//  NMS, Temporal Consistency, Confusion Groups, Size Validation
-// ==========================================================
-
 const DetectionPipeline = (function () {
     'use strict';
 
-    // ── Configuration ──
+    // Configuration
     const CONFIRM_FRAMES = 5;    // frames needed to confirm a detection
     const NMS_THRESHOLD = 0.45;  // IoU threshold for Non-Maximum Suppression
     const CONFUSION_THRESHOLD = 0.3; // IoU for confusion group resolution
     const DECAY_RATE = 2;        // how fast unconfirmed candidates decay
 
-    // ── Confusion groups: classes COCO-SSD commonly confuses ──
+    // Overlapping class groups
     const CONFUSE_GROUPS = [
         ['cell phone', 'remote', 'mouse', 'hair drier'],
         ['cup', 'bowl', 'vase'],
@@ -25,10 +20,10 @@ const DetectionPipeline = (function () {
     const confuseMap = {};
     CONFUSE_GROUPS.forEach(g => g.forEach(c => confuseMap[c] = g));
 
-    // ── Candidate tracker (for temporal consistency) ──
+    // State for temporal consistency
     const candidates = {};
 
-    // ── IoU calculation ──
+    // Bounding box intersection check
     function iou(a, b) {
         const x1 = Math.max(a[0], b[0]), y1 = Math.max(a[1], b[1]);
         const x2 = Math.min(a[0] + a[2], b[0] + b[2]), y2 = Math.min(a[1] + a[3], b[1] + b[3]);
@@ -37,7 +32,7 @@ const DetectionPipeline = (function () {
         return inter / (a[2] * a[3] + b[2] * b[3] - inter);
     }
 
-    // ── Size validation ──
+    // Reject invalid sizes
     function validateSize(pred, videoArea) {
         if (!DICT || !SIZE_RANGES) return true;
         const entry = DICT[pred.class];
@@ -50,7 +45,7 @@ const DetectionPipeline = (function () {
         return ratio >= range.min * 0.5 && ratio <= range.max * 2;
     }
 
-    // ── Main filter pipeline ──
+    // Primary filtering logic
     function filter(rawPreds, videoWidth, videoHeight) {
         const videoArea = videoWidth * videoHeight;
         let preds = [...rawPreds];
@@ -131,7 +126,7 @@ const DetectionPipeline = (function () {
         return confirmed;
     }
 
-    // ── Reset (e.g. on language change) ──
+    // Reset tracking state
     function reset() {
         for (const key in candidates) delete candidates[key];
     }

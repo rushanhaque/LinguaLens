@@ -1,8 +1,3 @@
-// ==========================================================
-//  LINGUALENS — Service Worker
-//  Caches all app files for offline use
-// ==========================================================
-
 const CACHE_NAME = 'lingualens-v1';
 const ASSETS = [
     './',
@@ -22,7 +17,7 @@ const CDN_ASSETS = [
     'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js'
 ];
 
-// Install: cache local assets
+// Cache local assets on install
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
@@ -30,7 +25,7 @@ self.addEventListener('install', event => {
     );
 });
 
-// Activate: clean old caches
+// Cleanup old caches
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys =>
@@ -39,7 +34,7 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Fetch: network-first for CDN (model files), cache-first for local assets
+// Main fetch handler
 self.addEventListener('fetch', event => {
     const url = event.request.url;
 

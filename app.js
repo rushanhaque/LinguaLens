@@ -1,11 +1,7 @@
-// ==========================================================
-//  LINGUALENS — Main Application
-//  Handles init, render loop, UI, speech, panels, events
-// ==========================================================
 (function () {
     'use strict';
 
-    // ── State ──
+    // App state
     const state = {
         model: null, lang: 'fr', quizMode: false, detecting: true, confidence: 0.55,
         vocab: JSON.parse(localStorage.getItem('ll_vocab') || '{}'),
@@ -13,7 +9,7 @@
         panelView: null, frameCount: 0, fpsUpdateTime: 0
     };
 
-    // ── EMA Smoothing ──
+    // Positioning helpers
     const SMOOTH = 0.12, GRACE = 15, smoothed = {};
     function lerp(a, b, t) { return a + (b - a) * t; }
     function updateSmooth(cls, rx, ry, rw, rh) {
@@ -32,7 +28,7 @@
         }
     }
 
-    // ── DOM ──
+    // UI Elements
     const $ = id => document.getElementById(id);
     const video = $('webcam'), canvas = $('overlay'), ctx = canvas.getContext('2d');
     const labelContainer = $('labelContainer'), detectedBar = $('detectedBar');
@@ -40,7 +36,7 @@
     const LANG_NAMES = { fr: 'French', es: 'Spanish', de: 'German', ja: 'Japanese', it: 'Italian' };
     const LK = { fr: 'fr', es: 'es', de: 'de', ja: 'ja', it: 'it' };
 
-    // ── Initialize ──
+    // Initialize app
     async function init() {
         updateLoad(10, 'Requesting camera…');
         try {
@@ -79,6 +75,7 @@
         setupEvents();
         updateStats();
         detectLoop();
+        if (window.innerWidth > 1024) openPanel('vocab');
     }
 
     function updateLoad(p, m) {
@@ -92,7 +89,7 @@
         canvas.height = w.clientHeight;
     }
 
-    // ── Detection Loop ──
+    // Processing loop
     async function detectLoop() {
         if (!state.model || !state.detecting) {
             requestAnimationFrame(detectLoop);
@@ -119,7 +116,7 @@
         requestAnimationFrame(detectLoop);
     }
 
-    // ── Smoothed Renderer ──
+    // Render labels to canvas
     function renderSmooth(preds) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const vw = video.videoWidth, vh = video.videoHeight;
@@ -218,7 +215,7 @@
         });
     }
 
-    // ── Canvas helpers ──
+    // Canvas drawing helpers
     function roundRect(ctx, x, y, w, h, r) {
         r = Math.min(r, w / 2, h / 2);
         ctx.beginPath();
@@ -240,7 +237,7 @@
         ctx.beginPath(); ctx.moveTo(x + l, y + h); ctx.lineTo(x, y + h); ctx.lineTo(x, y + h - l); ctx.stroke();
     }
 
-    // ── Detected Objects Bar ──
+    // Detection Bar UI
     function updateDetectedBar(preds) {
         const seen = new Set();
         const current = new Set();
@@ -280,7 +277,7 @@
         });
     }
 
-    // ── Speech ──
+    // TTS Engine
     function speak(text) {
         if (!window.speechSynthesis) return;
         speechSynthesis.cancel();
@@ -296,7 +293,7 @@
     }
     if (window.speechSynthesis) speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
 
-    // ── Vocabulary ──
+    // Vocabulary persistence
     function trackVocab(preds) {
         let newWord = false;
         preds.forEach(p => {
@@ -321,7 +318,7 @@
         }
     }
 
-    // ── Panels ──
+    // Panel views (Vocab / Settings)
     function openPanel(view) {
         state.panelView = view;
         const body = $('panelBody');
@@ -331,7 +328,7 @@
             if (!keys.length) {
                 body.innerHTML = '<div class="vocab-empty">No words yet — point your camera at objects!</div>';
             } else {
-                body.innerHTML = keys.map(c => {
+                body.innerHTML = keys.sort((a, b) => state.vocab[b].discovered - state.vocab[a].discovered).map(c => {
                     const e = DICT[c]; if (!e) return '';
                     const w = e[LK[state.lang]] || e.fr;
                     return `<div class="vocab-item" onclick="LinguaLens.speak('${w.replace(/'/g, "\\'")}')">` +
@@ -354,21 +351,26 @@
                 `<button class="btn" style="width:100%;margin-top:5px;justify-content:center" onclick="LinguaLens.clearBar()">🧹 Clear Detected Bar</button>` +
                 `</div>` +
                 `<div class="setting-group"><div class="setting-label">About</div>` +
-                `<p style="font-size:10px;color:var(--text-dim);line-height:1.5">LinguaLens uses TensorFlow.js with COCO-SSD (mobilenet_v2) for real-time object detection. ` +
-                `Includes NMS deduplication, temporal voting, confusion group resolution, and size validation. All processing is local — no data leaves your device.</p>` +
-                `<p style="font-size:9px;color:var(--olive);margin-top:6px;font-weight:500">Developed by Rushan Haque</p>` +
+                `<p style="font-size:11px;color:var(--text-dim);line-height:1.6">LinguaLens is a high-performance AR learning tool using TensorFlow.js. All processing happens locally for maximum privacy.</p>` +
+                `<p style="font-size:10px;color:var(--olive);margin-top:8px;font-weight:600;cursor:pointer;letter-spacing:0.5px" onclick="window.open('https://www.rushaanhaque.online', '_blank')">Developed by Rushan Haque</p>` +
                 `</div>`;
             $('confSlider').addEventListener('input', e => {
                 state.confidence = parseInt(e.target.value) / 100;
                 $('confVal').textContent = e.target.value + '%';
             });
         }
-        $('sidePanel').classList.add('open');
+        if (window.innerWidth <= 1024) {
+            $('sidePanel').classList.add('open');
+        } else {
+            $('sidePanel').classList.add('open'); // Persistent but ensures class is there
+        }
     }
 
     function closePanel() {
-        $('sidePanel').classList.remove('open');
-        state.panelView = null;
+        if (window.innerWidth <= 1024) {
+            $('sidePanel').classList.remove('open');
+            state.panelView = null;
+        }
     }
 
     function clearVocab() {
@@ -391,7 +393,7 @@
         showToast('Detected bar cleared');
     }
 
-    // ── Snapshot ──
+    // Capture screenshot
     function takeSnapshot() {
         const snap = document.createElement('canvas');
         snap.width = canvas.width;
@@ -408,7 +410,7 @@
         showToast('📸 Snapshot saved!');
     }
 
-    // ── Toast ──
+    // UI Feedback
     function showToast(msg) {
         const t = $('toast');
         t.textContent = msg;
@@ -417,7 +419,7 @@
         t._t = setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    // ── Events ──
+    // Interaction listeners
     function setupEvents() {
         $('langSelector').addEventListener('change', e => {
             state.lang = e.target.value;
@@ -454,7 +456,7 @@
         });
     }
 
-    // ── Public API ──
+    // Public helpers for buttons
     window.LinguaLens = { speak, clearVocab, resetQuiz, clearBar };
     window.addEventListener('load', init);
 })();
