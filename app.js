@@ -352,7 +352,7 @@
                 `</div>` +
                 `<div class="setting-group"><div class="setting-label">About</div>` +
                 `<p style="font-size:11px;color:var(--text-dim);line-height:1.6">LinguaLens is a high-performance AR learning tool using TensorFlow.js. All processing happens locally for maximum privacy.</p>` +
-                `<p style="font-size:10px;color:var(--olive);margin-top:8px;font-weight:600;cursor:pointer;letter-spacing:0.5px" onclick="window.open('https://www.rushaanhaque.online', '_blank')">Developed by Rushan Haque</p>` +
+                `<p style="font-size:10px;color:var(--olive);margin-top:8px;font-weight:600;cursor:pointer;letter-spacing:0.5px" onclick="window.open('https://www.rushanhaque.online', '_blank')">Developed by Rushan Haque</p>` +
                 `</div>`;
             $('confSlider').addEventListener('input', e => {
                 state.confidence = parseInt(e.target.value) / 100;
