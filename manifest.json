@@ -1,0 +1,23 @@
+{
+  "name": "LinguaLens — AR Language Learning",
+  "short_name": "LinguaLens",
+  "description": "Point your camera at objects to learn their names in 5 languages. Real-time AR translation powered by AI.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0b08",
+  "theme_color": "#8ba339",
+  "categories": ["education", "utilities"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>LinguaLens — AR Language Learning</title>
+  <meta name="description"
+    content="Real-time AR object identification for language learning. Point your camera at objects to learn their names in 5 languages.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#8ba339">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LinguaLens">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+      <div class="loader-logo">LinguaLens</div>
+      <div class="loader-sub">AR Language Learning</div>
+      <div class="loader-bar-track">
+        <div class="loader-bar-fill" id="loadBar"></div>
+      </div>
+      <div class="loader-status" id="loadStatus">Initializing…</div>
+    </div>
+
+    <!-- No Camera Fallback -->
+    <div id="noCameraMsg">
+      <h2>📷 Camera Required</h2>
+      <p>LinguaLens needs access to your webcam to identify objects. Please allow camera access and refresh.</p>
+      <button class="btn" onclick="location.reload()">🔄 Retry</button>
+    </div>
+
+    <!-- Video + AR Overlays -->
+    <div id="videoWrap">
+      <video id="webcam" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div id="labelContainer"></div>
+
+      <!-- Header -->
+      <div id="header">
+        <div class="logo">Lingua<span>Lens</span></div>
+        <div class="header-actions">
+          <select id="langSelector" title="Target Language">
+            <option value="fr">🇫🇷 French</option>
+            <option value="es">🇪🇸 Spanish</option>
+            <option value="de">🇩🇪 German</option>
+            <option value="ja">🇯🇵 Japanese</option>
+            <option value="it">🇮🇹 Italian</option>
+          </select>
+          <button class="btn" id="btnQuiz" title="Quiz Mode (Q)">🎯 Quiz</button>
+          <button class="btn" id="btnSnapshot" title="Snapshot (S)">📸</button>
+          <button class="btn" id="btnVocab" title="Vocabulary (V)">📚</button>
+          <button class="btn" id="btnSettings" title="Settings">⚙️</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Static Detected Objects Bar -->
+    <div id="detectedBar"></div>
+
+    <!-- Stats + Developer Credit -->
+    <div id="statsStrip">
+      <div class="stat"><span class="stat-value" id="statObjects">0</span><span class="stat-label">Discovered</span>
+      </div>
+      <div class="stat"><span class="stat-value" id="statDetecting">0</span><span class="stat-label">Detecting</span>
+      </div>
+      <div class="stat"><span class="stat-value" id="statQuizScore">—</span><span class="stat-label">Quiz</span></div>
+      <div class="stat"><span class="stat-value" id="statFPS">0</span><span class="stat-label">FPS</span></div>
+      <div class="credit-badge">
+        <div class="credit-dot"></div>
+        <div class="credit-name">Developed by Rushan Haque</div>
+      </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div id="sidePanel">
+      <div class="panel-header">
+        <div class="panel-title" id="panelTitle">Vocabulary</div>
+        <button class="panel-close" id="panelClose">✕</button>
+      </div>
+      <div class="panel-body" id="panelBody"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="dictionary.js"></script>
+  <script src="detector.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('SW registered:', reg.scope))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+
+</html>
