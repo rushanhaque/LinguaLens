@@ -72,7 +72,11 @@ body {
   height: 100%;
   object-fit: cover;
   z-index: 1;
-  transform: scaleX(-1)
+  /* Mirror controlled dynamically via JS based on front/rear camera */
+}
+
+#webcam.mirrored {
+  transform: scaleX(-1);
 }
 
 #overlay {
@@ -242,7 +246,7 @@ body {
 /* Camera Controls */
 #controls {
   position: absolute;
-  bottom: 15%;
+  bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -310,7 +314,7 @@ body {
 /* Detection Shelf */
 #detectedBar {
   position: absolute;
-  bottom: 120px;
+  bottom: 190px;
   left: 50%;
   transform: translateX(-50%);
   width: auto;
@@ -963,7 +967,6 @@ input[type=range]::-webkit-slider-thumb {
   }
 
   #detectedBar {
-    bottom: 40px;
     min-width: 400px;
   }
 
@@ -987,10 +990,6 @@ input[type=range]::-webkit-slider-thumb {
     bottom: 100px;
   }
 
-  #detectedBar {
-    bottom: 200px;
-  }
-
   .credit-badge {
     margin-left: 0;
   }
@@ -998,93 +997,257 @@ input[type=range]::-webkit-slider-thumb {
 
 @media(max-width: 1024px) {
   #sidePanel {
-    width: 350px;
-    border-left: 1px solid var(--glass-border);
+    width: 100%;
+    border-left: none;
+    border-radius: 0;
   }
 }
 
 @media(max-width: 768px) {
   #header {
-    padding: 12px 16px;
+    padding: 10px 14px;
+    background: linear-gradient(180deg, rgba(10, 11, 8, 0.98) 0%, rgba(10, 11, 8, 0.6) 70%, transparent 100%);
   }
 
   .logo {
-    font-size: 18px;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+
+  .header-actions {
+    gap: 5px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .header-actions::-webkit-scrollbar {
+    display: none;
   }
 
   .btn {
     padding: 6px 10px;
     font-size: 10px;
+    flex-shrink: 0;
   }
 
   #langSelector {
-    min-width: 90px;
+    min-width: 85px;
+    font-size: 10px;
+    flex-shrink: 0;
   }
 
-  #detectedBar {
-    bottom: 220px;
-    min-height: 50px;
-    padding: 6px 10px;
+  /* Stacking: Stats(bottom:0) -> Controls(bottom:80px) -> DetectedBar(above controls) */
+  #statsStrip {
+    padding: 10px 16px 20px 16px;
+    gap: 16px;
+    z-index: 10;
   }
 
   #controls {
-    bottom: 120px;
+    bottom: 80px;
+  }
+
+  #detectedBar {
+    bottom: 170px;
+    min-height: 48px;
+    padding: 6px 12px;
+    min-width: 200px;
+    max-width: 92vw;
+    border-radius: 28px;
+  }
+
+  .detected-chip {
+    padding: 6px 10px;
+    gap: 7px;
+  }
+
+  .chip-emoji {
+    font-size: 16px;
+  }
+
+  .chip-foreign {
+    font-size: 12px;
   }
 
   .stat-value {
     font-size: 12px;
   }
 
+  .stat-label {
+    font-size: 6px;
+  }
+
   .credit-badge {
-    scale: 0.9;
+    scale: 0.85;
+  }
+
+  .shutter-btn {
+    width: 64px;
+    height: 64px;
+  }
+
+  .shutter-inner {
+    width: 52px;
+    height: 52px;
+  }
+
+  .label-card {
+    min-width: 95px;
+    max-width: 160px;
+    padding: 7px 10px;
+  }
+
+  .label-foreign {
+    font-size: 12px;
+  }
+
+  .label-english {
+    font-size: 8px;
+  }
+
+  .toast {
+    bottom: 250px;
+    font-size: 10px;
+    padding: 7px 14px;
   }
 }
 
 @media(max-width: 480px) {
   #header {
-    padding: 8px 12px;
+    padding: 8px 10px;
   }
 
   .logo {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .header-actions {
-    gap: 4px;
+    gap: 3px;
   }
 
   .btn {
-    padding: 5px 8px;
+    padding: 5px 7px;
     font-size: 9px;
   }
 
-  #detectedBar {
+  #langSelector {
+    min-width: 75px;
+    padding: 6px 8px;
+    font-size: 9px;
+  }
+
+  #controls {
     bottom: 70px;
-    width: 95vw;
+  }
+
+  #detectedBar {
+    bottom: 150px;
+    width: 94vw;
+    min-width: unset;
+    border-radius: 22px;
+    padding: 5px 10px;
+    min-height: 44px;
+    gap: 5px;
+  }
+
+  .detected-chip {
+    padding: 5px 8px;
+    gap: 6px;
+    border-radius: 10px;
+  }
+
+  .chip-foreign {
+    font-size: 11px;
+  }
+
+  .chip-english {
+    font-size: 7px;
+  }
+
+  .chip-speak {
+    width: 20px;
+    height: 20px;
+    font-size: 9px;
   }
 
   #statsStrip {
-    gap: 10px;
-    padding: 10px 12px 20px 12px;
-    flex-wrap: wrap;
+    gap: 12px;
+    padding: 8px 12px 18px 12px;
+  }
+
+  .stat-value {
+    font-size: 11px;
   }
 
   .credit-badge {
     margin-left: 0;
-    margin-top: 5px;
-    width: 100%;
-    justify-content: center;
-    scale: 0.85;
+    scale: 0.8;
+  }
+
+  .shutter-btn {
+    width: 58px;
+    height: 58px;
+  }
+
+  .shutter-inner {
+    width: 46px;
+    height: 46px;
+  }
+
+  .toast {
+    bottom: 230px;
+  }
+
+  .label-card {
+    min-width: 85px;
+    max-width: 140px;
+    padding: 6px 8px;
+  }
+
+  .label-foreign {
+    font-size: 11px;
+  }
+
+  .label-phonetic {
+    font-size: 8px;
+  }
+
+  .label-english {
+    font-size: 7px;
   }
 }
 
 @media(max-width: 360px) {
+  .logo {
+    font-size: 14px;
+  }
+
   .header-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end
+    gap: 2px;
+  }
+
+  .btn {
+    padding: 4px 6px;
+    font-size: 8px;
+  }
+
+  #langSelector {
+    min-width: 65px;
+    font-size: 8px;
   }
 
   .label-card {
-    max-width: 100px
+    max-width: 110px;
+    min-width: 75px;
+  }
+
+  #detectedBar {
+    bottom: 142px;
+  }
+
+  .credit-badge {
+    scale: 0.75;
   }
 }

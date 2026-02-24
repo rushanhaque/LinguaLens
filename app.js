@@ -3,10 +3,11 @@
 
     // App state
     const state = {
-        model: null, lang: 'fr', quizMode: false, detecting: true, confidence: 0.55,
+        model: null, lang: 'fr', quizMode: false, detecting: true, confidence: 0.65,
         vocab: JSON.parse(localStorage.getItem('ll_vocab') || '{}'),
         quizCorrect: 0, quizTotal: 0, fps: 0, currentDetections: [],
-        panelView: null, frameCount: 0, fpsUpdateTime: 0
+        panelView: null, frameCount: 0, fpsUpdateTime: 0,
+        isFrontCamera: true
     };
 
     // Positioning helpers
@@ -40,10 +41,27 @@
     async function init() {
         updateLoad(10, 'Requesting camera…');
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-            });
+            // Try rear camera first (mobile)
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                state.isFrontCamera = false;
+            } catch (_) {
+                // Fallback to any camera (desktop/front)
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                state.isFrontCamera = true;
+            }
             video.srcObject = stream;
+            // Mirror only front-facing cameras
+            if (state.isFrontCamera) {
+                video.classList.add('mirrored');
+            } else {
+                video.classList.remove('mirrored');
+            }
             await video.play();
             updateLoad(30, 'Camera ready. Loading AI model…');
         } catch (e) {
@@ -128,7 +146,7 @@
         // Feed raw positions into smoother
         preds.forEach(p => {
             let [bx, by, bw, bh] = p.bbox;
-            bx = vw - bx - bw; // mirror
+            if (state.isFrontCamera) bx = vw - bx - bw; // mirror only for front camera
             updateSmooth(p.class, bx * sc + ox, by * sc + oy, bw * sc, bh * sc);
         });
         ageSmooth();
@@ -399,9 +417,13 @@
         snap.width = canvas.width;
         snap.height = canvas.height;
         const sc = snap.getContext('2d');
-        sc.save(); sc.translate(snap.width, 0); sc.scale(-1, 1);
-        sc.drawImage(video, 0, 0, snap.width, snap.height);
-        sc.restore();
+        if (state.isFrontCamera) {
+            sc.save(); sc.translate(snap.width, 0); sc.scale(-1, 1);
+            sc.drawImage(video, 0, 0, snap.width, snap.height);
+            sc.restore();
+        } else {
+            sc.drawImage(video, 0, 0, snap.width, snap.height);
+        }
         sc.drawImage(canvas, 0, 0);
         const link = document.createElement('a');
         link.download = `lingualens_${Date.now()}.png`;
