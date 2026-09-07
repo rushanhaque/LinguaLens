@@ -3,111 +3,126 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>LinguaLens — AR Language Learning</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <title>LinguaLens — Camera Language Learning</title>
+
   <meta name="description"
-    content="Real-time AR object identification for language learning. Point your camera at objects to learn their names in 5 languages.">
+    content="Point your camera at anything and learn what it's called in 12 languages. Real-time on-device object recognition, pronunciation, grammar and spaced-repetition review. Works offline.">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark light">
+
+  <!-- PWA / iOS -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#8ba339">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LinguaLens">
   <link rel="apple-touch-icon" href="icon-512.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <link rel="icon" href="icon-512.png" type="image/png">
+
+  <!-- Social -->
+  <meta property="og:title" content="LinguaLens">
+  <meta property="og:description" content="Point your camera at the world and learn what everything is called — in 12 languages, entirely on your device.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="icon-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/views.css">
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 </head>
 
 <body>
+  <a class="visually-hidden" href="#view-camera">Skip to camera</a>
+
   <div id="app">
-    <div id="loadingScreen">
-      <div class="loader-logo">LinguaLens</div>
-      <div class="loader-sub">AR Language Learning</div>
-      <div class="loader-bar-track">
-        <div class="loader-bar-fill" id="loadBar"></div>
-      </div>
-      <div class="loader-status" id="loadStatus">Initializing…</div>
-      <div class="loader-nametag">Developed by Rushan Haque</div>
-    </div>
+    <main id="views" class="grow" style="position:relative">
 
-    <div id="noCameraMsg">
-      <h2>📷 Camera Required</h2>
-      <p>LinguaLens needs access to your webcam to identify objects. Please allow camera access and refresh.</p>
-      <button class="btn" onclick="location.reload()">🔄 Retry</button>
-    </div>
+      <!-- ══ Camera ═══════════════════════════════════════════════════ -->
+      <section class="view is-active on-camera" id="view-camera" role="tabpanel" aria-labelledby="tab-camera">
+        <div id="stage">
+          <video id="webcam" autoplay playsinline muted disablepictureinpicture></video>
+          <canvas id="overlay" aria-hidden="true"></canvas>
+          <div id="label-layer"></div>
+          <div id="focus-ring" aria-hidden="true"></div>
+          <div id="flash" aria-hidden="true"></div>
 
-    <div id="videoWrap">
-      <video id="webcam" autoplay playsinline muted></video>
-      <canvas id="overlay"></canvas>
-      <div id="labelContainer"></div>
+          <div id="cam-top">
+            <button class="lang-pill" id="btn-lang" aria-label="Change learning language"></button>
+            <span class="grow"></span>
+            <button class="icon-btn" id="btn-quiz" aria-label="Quiz mode" aria-pressed="false" title="Quiz mode (Q)"></button>
+          </div>
 
-      <div id="header">
-        <div class="logo">Lingua<span>Lens</span></div>
-        <div class="header-actions">
-          <select id="langSelector" title="Target Language">
-            <option value="fr">🇫🇷 French</option>
-            <option value="es">🇪🇸 Spanish</option>
-            <option value="de">🇩🇪 German</option>
-            <option value="ja">🇯🇵 Japanese</option>
-            <option value="it">🇮🇹 Italian</option>
-          </select>
-          <button class="btn" id="btnQuiz" title="Quiz Mode (Q)">🎯 Quiz</button>
-          <button class="btn" id="btnVocab" title="Vocabulary (V)">📚</button>
-          <button class="btn" id="btnSettings" title="Settings">⚙️</button>
+          <div id="status-pill" role="status" aria-live="off"></div>
+
+          <div id="cam-side">
+            <button class="icon-btn" id="btn-flip" aria-label="Switch camera" title="Flip camera (F)"></button>
+            <button class="icon-btn" id="btn-torch" aria-label="Torch" aria-pressed="false" hidden></button>
+            <button class="icon-btn" id="btn-zoom" aria-label="Zoom level" title="Zoom"
+              style="font-size:13px;font-weight:700">1×</button>
+            <button class="icon-btn" id="btn-pause" aria-label="Pause detection" title="Pause (P)"></button>
+          </div>
+
+          <div id="cam-bottom">
+            <div id="detected-strip" aria-live="polite" aria-label="Objects currently detected"></div>
+            <div id="shutter-row">
+              <button class="icon-btn icon-btn-lg" id="btn-import" aria-label="Analyse a photo from your library"></button>
+              <button class="shutter" id="btn-shutter" aria-label="Capture snapshot"></button>
+              <button class="icon-btn icon-btn-lg" id="btn-help" aria-label="Tips"></button>
+            </div>
+          </div>
+
+          <div id="cam-error" role="alert"></div>
         </div>
-      </div>
+        <input type="file" id="photo-input" accept="image/*" hidden>
+      </section>
 
-      <!-- Camera Shutter Button -->
-      <div id="controls">
-        <button id="btnSnapshot" class="shutter-btn" title="Capture Snapshot (S)">
-          <div class="shutter-inner"></div>
-        </button>
-      </div>
-    </div>
+      <!-- ══ Learn ════════════════════════════════════════════════════ -->
+      <section class="view" id="view-learn" role="tabpanel" aria-labelledby="tab-learn"></section>
 
-    <div id="detectedBar"></div>
+      <!-- ══ Progress ═════════════════════════════════════════════════ -->
+      <section class="view" id="view-progress" role="tabpanel" aria-labelledby="tab-progress"></section>
 
-    <div id="statsStrip">
-      <div class="stat"><span class="stat-value" id="statObjects">0</span><span class="stat-label">Discovered</span>
-      </div>
-      <div class="stat"><span class="stat-value" id="statDetecting">0</span><span class="stat-label">Detecting</span>
-      </div>
-      <div class="stat"><span class="stat-value" id="statQuizScore">—</span><span class="stat-label">Quiz</span></div>
-      <div class="stat"><span class="stat-value" id="statFPS">0</span><span class="stat-label">FPS</span></div>
-      <a href="https://www.rushanhaque.online" target="_blank" class="credit-badge" title="Visit Developer Website">
-        <div class="credit-dot"></div>
-        <div class="credit-name">Developed by Rushan Haque</div>
-      </a>
-    </div>
+      <!-- ══ Settings ═════════════════════════════════════════════════ -->
+      <section class="view" id="view-settings" role="tabpanel" aria-labelledby="tab-settings"></section>
+    </main>
 
-    <div id="sidePanel">
-      <div class="panel-header">
-        <div class="panel-title" id="panelTitle">Vocabulary</div>
-        <button class="panel-close" id="panelClose">✕</button>
-      </div>
-      <div class="panel-body" id="panelBody"></div>
-    </div>
-
-    <div class="toast" id="toast"></div>
+    <nav id="tabbar" role="tablist" aria-label="Main navigation"></nav>
   </div>
 
-  <script src="dictionary.js"></script>
-  <script src="detector.js"></script>
-  <script src="app.js"></script>
-  <script>
-    // Register Service Worker for PWA
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('SW registered:', reg.scope))
-          .catch(err => console.log('SW registration failed:', err));
-      });
-    }
-  </script>
+  <div id="toast-layer"></div>
+  <div id="onboarding"></div>
+
+  <!-- ══ Launch screen ══════════════════════════════════════════════ -->
+  <div id="launch">
+    <div class="launch-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 3v6.2M20.8 8.4l-5.9 2M18.4 19.1l-3.6-5M5.6 19.1l3.6-5M3.2 8.4l5.9 2" />
+        <circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" />
+      </svg>
+    </div>
+    <div class="launch-word">Lingua<span>Lens</span></div>
+    <div class="launch-tag">See the world. Learn its words.</div>
+    <div class="launch-track"><div class="launch-fill" id="launch-fill"></div></div>
+    <div class="launch-status" id="launch-status">Starting…</div>
+    <div class="launch-credit">Developed by Rushan Haque</div>
+  </div>
+
+  <noscript>
+    <div style="padding:2rem;text-align:center;font-family:system-ui">
+      <h1>JavaScript required</h1>
+      <p>LinguaLens runs its object recognition in your browser, which needs JavaScript enabled.</p>
+    </div>
+  </noscript>
+
+  <script type="module" src="src/app.js"></script>
 </body>
 
 </html>
