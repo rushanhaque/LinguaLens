@@ -1,19 +1,26 @@
 /* ============================================================================
-   tokens.css — LinguaLens design system
-   Apple-HIG-inspired: system materials, semantic colour roles, an iOS type
-   ramp, and spring-timed motion. Everything downstream reads from here.
+   tokens.css — Lemma design system
+
+   Light-first and deliberately quiet. The palette is warm paper and muted
+   pigment rather than screen primaries: an off-white ground with a green
+   undertone, warm near-black ink, and a deep sage accent. Nothing here is
+   fully saturated and nothing is pure black or pure white — that is what
+   makes it read as printed matter instead of as a dashboard.
+
+   The one exception is the camera surface, which sits on live video and so
+   keeps a dark frosted treatment in every theme (see `.on-camera`).
    ========================================================================== */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light dark;
 
   /* ── Type ─────────────────────────────────────────────────────────────── */
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
     'Inter', 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif;
   --font-rounded: ui-rounded, -apple-system, 'SF Pro Rounded', 'Nunito', var(--font-sans);
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
   --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, monospace;
 
-  /* iOS type ramp. Sizes are rem so browser text scaling is respected. */
   --t-large-title: 2.125rem;   /* 34 */
   --t-title-1: 1.75rem;        /* 28 */
   --t-title-2: 1.375rem;       /* 22 */
@@ -35,35 +42,39 @@
   --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
   --s-12: 48px; --s-16: 64px;
 
-  /* ── Radii — large + nested for a continuous-corner feel ──────────────── */
+  /* ── Radii ────────────────────────────────────────────────────────────── */
   --r-xs: 8px;  --r-sm: 12px; --r-md: 16px;
-  --r-lg: 22px; --r-xl: 28px; --r-2xl: 36px; --r-full: 999px;
+  --r-lg: 20px; --r-xl: 26px; --r-2xl: 32px; --r-full: 999px;
 
-  /* ── Motion — iOS spring curves ───────────────────────────────────────── */
+  /* ── Motion ───────────────────────────────────────────────────────────── */
   --spring: cubic-bezier(0.32, 0.72, 0, 1);
   --spring-soft: cubic-bezier(0.4, 0.8, 0.2, 1);
-  --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-bounce: cubic-bezier(0.34, 1.4, 0.64, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --d-fast: 180ms;
   --d-base: 280ms;
   --d-slow: 450ms;
 
   /* ── Accent (overridden by [data-accent]) ─────────────────────────────── */
-  --accent: #A8C93A;
-  --accent-deep: #7E9A28;
-  --accent-bright: #C6E75A;
-  --accent-contrast: #10130A;
+  --accent: #5E6E4C;
+  --accent-deep: #46543A;
+  --accent-bright: #7E9163;
+  --accent-contrast: #FDFCF7;
 
-  /* ── Fixed system colours (identical in both themes) ──────────────────── */
-  --red: #FF453A;
-  --orange: #FF9F0A;
-  --yellow: #FFD60A;
-  --green: #30D158;
-  --teal: #40C8E0;
-  --blue: #0A84FF;
-  --indigo: #5E5CE6;
-  --purple: #BF5AF2;
-  --pink: #FF375F;
+  /* ── Semantic pigments ────────────────────────────────────────────────────
+     Muted earth tones rather than screen primaries, so a status colour never
+     shouts over the paper ground. */
+  --red: #A85548;
+  --orange: #B57C46;
+  --yellow: #A88C3C;
+  --green: #5F7B4C;
+  --teal: #4E7D7B;
+  --indigo: #5A6180;
+  --blue: #4F6D91;
+  --purple: #7A6182;
+  --pink: #A66F78;
+  --clay: #A2664B;
+  --stone: #6B6659;
 
   /* ── Safe areas ───────────────────────────────────────────────────────── */
   --sat: env(safe-area-inset-top, 0px);
@@ -75,149 +86,193 @@
   --header-h: 52px;
 }
 
-/* ── Dark theme (default) ─────────────────────────────────────────────────
-   Layered greys rather than pure black so translucent materials have
-   something to blur against. */
+/* ══ Light — the default ═════════════════════════════════════════════════ */
 :root,
-:root[data-theme='dark'] {
-  color-scheme: dark;
-
-  --bg: #000000;
-  --bg-elevated: #0E0F0C;
-  --surface-1: #16180F;
-  --surface-2: #1F2116;
-  --surface-3: #2A2C20;
-
-  --label: #FFFFFF;
-  --label-2: rgba(235, 240, 220, 0.62);
-  --label-3: rgba(235, 240, 220, 0.36);
-  --label-4: rgba(235, 240, 220, 0.20);
-
-  --separator: rgba(235, 240, 220, 0.13);
-  --separator-opaque: #2C2E22;
-  --fill-1: rgba(235, 240, 220, 0.12);
-  --fill-2: rgba(235, 240, 220, 0.08);
-  --fill-3: rgba(235, 240, 220, 0.05);
-
-  /* Materials — blur + saturation, the way vibrancy reads on Apple platforms */
-  --mat-ultrathin: rgba(24, 26, 18, 0.55);
-  --mat-thin: rgba(20, 22, 15, 0.70);
-  --mat-regular: rgba(16, 18, 12, 0.80);
-  --mat-thick: rgba(10, 11, 8, 0.90);
-  --mat-blur: saturate(180%) blur(30px);
-  --mat-blur-strong: saturate(200%) blur(48px);
-
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-2: 0 6px 20px -6px rgba(0, 0, 0, 0.65);
-  --shadow-3: 0 20px 56px -16px rgba(0, 0, 0, 0.8);
-  --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.06);
-
-  --scrim: rgba(0, 0, 0, 0.55);
-}
-
-/* ── Light theme ──────────────────────────────────────────────────────────
-   Follows the system unless the user pinned a theme. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) {
-    color-scheme: light;
-
-    --bg: #F2F3EC;
-    --bg-elevated: #FFFFFF;
-    --surface-1: #FFFFFF;
-    --surface-2: #F7F8F1;
-    --surface-3: #ECEEE2;
-
-    --label: #0B0D06;
-    --label-2: rgba(24, 28, 12, 0.62);
-    --label-3: rgba(24, 28, 12, 0.36);
-    --label-4: rgba(24, 28, 12, 0.20);
-
-    --separator: rgba(24, 28, 12, 0.13);
-    --separator-opaque: #DDDFD2;
-    --fill-1: rgba(24, 28, 12, 0.09);
-    --fill-2: rgba(24, 28, 12, 0.06);
-    --fill-3: rgba(24, 28, 12, 0.035);
-
-    --mat-ultrathin: rgba(255, 255, 255, 0.62);
-    --mat-thin: rgba(252, 253, 248, 0.76);
-    --mat-regular: rgba(250, 251, 245, 0.86);
-    --mat-thick: rgba(246, 248, 240, 0.94);
-
-    --shadow-1: 0 1px 2px rgba(24, 28, 12, 0.10);
-    --shadow-2: 0 6px 20px -6px rgba(24, 28, 12, 0.18);
-    --shadow-3: 0 20px 56px -16px rgba(24, 28, 12, 0.25);
-    --shadow-glow: 0 0 0 1px rgba(24, 28, 12, 0.05);
-
-    --scrim: rgba(0, 0, 0, 0.30);
-    --accent: #6E8C1E;
-    --accent-deep: #55701A;
-    --accent-bright: #8FB02C;
-    --accent-contrast: #FFFFFF;
-  }
-}
-
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --bg: #F2F3EC;
+  --bg: #F4F1E8;              /* warm paper */
   --bg-elevated: #FFFFFF;
-  --surface-1: #FFFFFF;
-  --surface-2: #F7F8F1;
-  --surface-3: #ECEEE2;
+  --surface-1: #FCFBF6;
+  --surface-2: #F7F4EB;
+  --surface-3: #EDE8DA;
 
-  --label: #0B0D06;
-  --label-2: rgba(24, 28, 12, 0.62);
-  --label-3: rgba(24, 28, 12, 0.36);
-  --label-4: rgba(24, 28, 12, 0.20);
+  --label: #24241D;           /* warm ink, never pure black */
+  --label-2: rgba(36, 36, 29, 0.62);
+  --label-3: rgba(36, 36, 29, 0.42);
+  --label-4: rgba(36, 36, 29, 0.22);
 
-  --separator: rgba(24, 28, 12, 0.13);
-  --separator-opaque: #DDDFD2;
-  --fill-1: rgba(24, 28, 12, 0.09);
-  --fill-2: rgba(24, 28, 12, 0.06);
-  --fill-3: rgba(24, 28, 12, 0.035);
+  --separator: rgba(36, 36, 29, 0.11);
+  --separator-opaque: #E2DCCC;
+  --fill-1: rgba(36, 36, 29, 0.075);
+  --fill-2: rgba(36, 36, 29, 0.048);
+  --fill-3: rgba(36, 36, 29, 0.028);
 
-  --mat-ultrathin: rgba(255, 255, 255, 0.62);
-  --mat-thin: rgba(252, 253, 248, 0.76);
-  --mat-regular: rgba(250, 251, 245, 0.86);
-  --mat-thick: rgba(246, 248, 240, 0.94);
+  --mat-ultrathin: rgba(252, 251, 246, 0.64);
+  --mat-thin: rgba(250, 248, 241, 0.78);
+  --mat-regular: rgba(248, 245, 237, 0.88);
+  --mat-thick: rgba(245, 242, 233, 0.95);
+  --mat-blur: saturate(140%) blur(28px);
+  --mat-blur-strong: saturate(150%) blur(44px);
 
-  --shadow-1: 0 1px 2px rgba(24, 28, 12, 0.10);
-  --shadow-2: 0 6px 20px -6px rgba(24, 28, 12, 0.18);
-  --shadow-3: 0 20px 56px -16px rgba(24, 28, 12, 0.25);
-  --shadow-glow: 0 0 0 1px rgba(24, 28, 12, 0.05);
+  /* Shadows carry the paper's warmth rather than neutral grey. */
+  --shadow-1: 0 1px 2px rgba(72, 64, 44, 0.06);
+  --shadow-2: 0 8px 24px -10px rgba(72, 64, 44, 0.18);
+  --shadow-3: 0 26px 64px -20px rgba(72, 64, 44, 0.24);
+  --shadow-glow: 0 0 0 1px rgba(72, 64, 44, 0.07);
 
-  --scrim: rgba(0, 0, 0, 0.30);
-  --accent: #6E8C1E;
-  --accent-deep: #55701A;
-  --accent-bright: #8FB02C;
-  --accent-contrast: #FFFFFF;
+  --scrim: rgba(30, 28, 20, 0.30);
 }
 
-/* The camera view is always a dark canvas — overlays keep dark-mode contrast
-   even when the rest of the app is light. */
-:root[data-theme='light'] .on-camera,
-:root:not([data-theme='dark']) .on-camera {
-  --label: #FFFFFF;
-  --label-2: rgba(255, 255, 255, 0.66);
-  --label-3: rgba(255, 255, 255, 0.40);
-  --fill-1: rgba(255, 255, 255, 0.16);
-  --fill-2: rgba(255, 255, 255, 0.10);
-  --separator: rgba(255, 255, 255, 0.16);
-  --mat-ultrathin: rgba(28, 30, 22, 0.42);
-  --mat-thin: rgba(20, 22, 15, 0.58);
-  --mat-regular: rgba(14, 16, 10, 0.72);
+/* ══ Dark — warm charcoal, not black ═════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --bg: #16150F;
+    --bg-elevated: #1D1C15;
+    --surface-1: #211F18;
+    --surface-2: #28261D;
+    --surface-3: #322F24;
+
+    --label: #F2EFE3;
+    --label-2: rgba(242, 239, 227, 0.62);
+    --label-3: rgba(242, 239, 227, 0.40);
+    --label-4: rgba(242, 239, 227, 0.20);
+
+    --separator: rgba(242, 239, 227, 0.12);
+    --separator-opaque: #343126;
+    --fill-1: rgba(242, 239, 227, 0.10);
+    --fill-2: rgba(242, 239, 227, 0.065);
+    --fill-3: rgba(242, 239, 227, 0.04);
+
+    --mat-ultrathin: rgba(33, 31, 24, 0.60);
+    --mat-thin: rgba(28, 26, 20, 0.74);
+    --mat-regular: rgba(24, 22, 17, 0.85);
+    --mat-thick: rgba(20, 19, 14, 0.93);
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --shadow-2: 0 8px 24px -10px rgba(0, 0, 0, 0.60);
+    --shadow-3: 0 26px 64px -20px rgba(0, 0, 0, 0.72);
+    --shadow-glow: 0 0 0 1px rgba(242, 239, 227, 0.06);
+
+    --scrim: rgba(0, 0, 0, 0.52);
+
+    --accent: #9EB280;
+    --accent-deep: #7B8F61;
+    --accent-bright: #BACB9C;
+    --accent-contrast: #1A1E12;
+
+    --red: #C97B6C;
+    --orange: #D2A06A;
+    --yellow: #CBB268;
+    --green: #8FA97A;
+    --teal: #74A6A3;
+    --indigo: #8A90B0;
+    --blue: #7C9BBF;
+    --purple: #A68CAD;
+    --pink: #C79AA1;
+    --clay: #C68F71;
+    --stone: #9B9585;
+  }
 }
 
-/* ── Accent palettes ──────────────────────────────────────────────────────
-   'lens' is the brand default; the rest mirror iOS accent choices. */
-:root[data-accent='lens']   { --accent: #A8C93A; --accent-deep: #7E9A28; --accent-bright: #C6E75A; --accent-contrast: #10130A; }
-:root[data-accent='blue']   { --accent: #0A84FF; --accent-deep: #0060DF; --accent-bright: #4DA6FF; --accent-contrast: #FFFFFF; }
-:root[data-accent='purple'] { --accent: #BF5AF2; --accent-deep: #9A32D6; --accent-bright: #D68CFF; --accent-contrast: #FFFFFF; }
-:root[data-accent='pink']   { --accent: #FF375F; --accent-deep: #D81E45; --accent-bright: #FF7093; --accent-contrast: #FFFFFF; }
-:root[data-accent='orange'] { --accent: #FF9F0A; --accent-deep: #D97C00; --accent-bright: #FFBC4D; --accent-contrast: #1A1200; }
-:root[data-accent='teal']   { --accent: #40C8E0; --accent-deep: #1BA0B8; --accent-bright: #7ADCEF; --accent-contrast: #04191E; }
+:root[data-theme='dark'] {
+  color-scheme: dark;
 
-:root[data-theme='light'][data-accent='lens'] { --accent: #6E8C1E; --accent-deep: #55701A; --accent-bright: #8FB02C; --accent-contrast: #FFFFFF; }
+  --bg: #16150F;
+  --bg-elevated: #1D1C15;
+  --surface-1: #211F18;
+  --surface-2: #28261D;
+  --surface-3: #322F24;
+
+  --label: #F2EFE3;
+  --label-2: rgba(242, 239, 227, 0.62);
+  --label-3: rgba(242, 239, 227, 0.40);
+  --label-4: rgba(242, 239, 227, 0.20);
+
+  --separator: rgba(242, 239, 227, 0.12);
+  --separator-opaque: #343126;
+  --fill-1: rgba(242, 239, 227, 0.10);
+  --fill-2: rgba(242, 239, 227, 0.065);
+  --fill-3: rgba(242, 239, 227, 0.04);
+
+  --mat-ultrathin: rgba(33, 31, 24, 0.60);
+  --mat-thin: rgba(28, 26, 20, 0.74);
+  --mat-regular: rgba(24, 22, 17, 0.85);
+  --mat-thick: rgba(20, 19, 14, 0.93);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-2: 0 8px 24px -10px rgba(0, 0, 0, 0.60);
+  --shadow-3: 0 26px 64px -20px rgba(0, 0, 0, 0.72);
+  --shadow-glow: 0 0 0 1px rgba(242, 239, 227, 0.06);
+
+  --scrim: rgba(0, 0, 0, 0.52);
+
+  --accent: #9EB280;
+  --accent-deep: #7B8F61;
+  --accent-bright: #BACB9C;
+  --accent-contrast: #1A1E12;
+
+  --red: #C97B6C;
+  --orange: #D2A06A;
+  --yellow: #CBB268;
+  --green: #8FA97A;
+  --teal: #74A6A3;
+  --indigo: #8A90B0;
+  --blue: #7C9BBF;
+  --purple: #A68CAD;
+  --pink: #C79AA1;
+  --clay: #C68F71;
+  --stone: #9B9585;
+}
+
+/* ══ Camera surface ══════════════════════════════════════════════════════
+   Chrome here sits on arbitrary live video, where a pale frosted panel would
+   vanish against a white wall or the sky. So it stays a warm dark frost in
+   every theme — the same reason a camera app's controls are always dark. */
+.on-camera {
+  --label: #FBFAF4;
+  --label-2: rgba(251, 250, 244, 0.68);
+  --label-3: rgba(251, 250, 244, 0.44);
+  --label-4: rgba(251, 250, 244, 0.24);
+  --fill-1: rgba(251, 250, 244, 0.15);
+  --fill-2: rgba(251, 250, 244, 0.09);
+  --fill-3: rgba(251, 250, 244, 0.05);
+  --separator: rgba(251, 250, 244, 0.16);
+  --mat-ultrathin: rgba(30, 29, 22, 0.44);
+  --mat-thin: rgba(24, 23, 17, 0.60);
+  --mat-regular: rgba(20, 19, 14, 0.74);
+  --mat-thick: rgba(16, 15, 11, 0.88);
+  --shadow-glow: 0 0 0 1px rgba(251, 250, 244, 0.10);
+  --accent-bright: #BACB9C;
+}
+
+/* ══ Accents ═════════════════════════════════════════════════════════════
+   Six muted pigments. Each declares a light pair (dark enough to pass text
+   contrast on paper) and a dark-theme pair (light enough to pass on charcoal). */
+:root[data-accent='sage']   { --accent: #5E6E4C; --accent-deep: #46543A; --accent-bright: #7E9163; --accent-contrast: #FDFCF7; }
+:root[data-accent='clay']   { --accent: #9A5C42; --accent-deep: #7C4835; --accent-bright: #BC7C5E; --accent-contrast: #FDFCF7; }
+:root[data-accent='indigo'] { --accent: #4C5A78; --accent-deep: #3A465F; --accent-bright: #6D7C9C; --accent-contrast: #FDFCF7; }
+:root[data-accent='plum']   { --accent: #74506E; --accent-deep: #5C3E57; --accent-bright: #98718F; --accent-contrast: #FDFCF7; }
+:root[data-accent='ochre']  { --accent: #866B2E; --accent-deep: #6A5423; --accent-bright: #A98C4C; --accent-contrast: #FDFCF7; }
+:root[data-accent='stone']  { --accent: #5C5749; --accent-deep: #464236; --accent-bright: #837C6B; --accent-contrast: #FDFCF7; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light'])[data-accent='sage']   { --accent: #9EB280; --accent-deep: #7B8F61; --accent-bright: #BACB9C; --accent-contrast: #1A1E12; }
+  :root:not([data-theme='light'])[data-accent='clay']   { --accent: #C68F71; --accent-deep: #A56F54; --accent-bright: #DCAC90; --accent-contrast: #211208; }
+  :root:not([data-theme='light'])[data-accent='indigo'] { --accent: #8FA0C4; --accent-deep: #6F80A4; --accent-bright: #AEBBD8; --accent-contrast: #11151F; }
+  :root:not([data-theme='light'])[data-accent='plum']   { --accent: #B491AC; --accent-deep: #93728C; --accent-bright: #CDB0C6; --accent-contrast: #1C1119; }
+  :root:not([data-theme='light'])[data-accent='ochre']  { --accent: #C6AC6C; --accent-deep: #A48C4F; --accent-bright: #DCC791; --accent-contrast: #1D1704; }
+  :root:not([data-theme='light'])[data-accent='stone']  { --accent: #A79F8C; --accent-deep: #86806F; --accent-bright: #C3BCAB; --accent-contrast: #17150F; }
+}
+
+:root[data-theme='dark'][data-accent='sage']   { --accent: #9EB280; --accent-deep: #7B8F61; --accent-bright: #BACB9C; --accent-contrast: #1A1E12; }
+:root[data-theme='dark'][data-accent='clay']   { --accent: #C68F71; --accent-deep: #A56F54; --accent-bright: #DCAC90; --accent-contrast: #211208; }
+:root[data-theme='dark'][data-accent='indigo'] { --accent: #8FA0C4; --accent-deep: #6F80A4; --accent-bright: #AEBBD8; --accent-contrast: #11151F; }
+:root[data-theme='dark'][data-accent='plum']   { --accent: #B491AC; --accent-deep: #93728C; --accent-bright: #CDB0C6; --accent-contrast: #1C1119; }
+:root[data-theme='dark'][data-accent='ochre']  { --accent: #C6AC6C; --accent-deep: #A48C4F; --accent-bright: #DCC791; --accent-contrast: #1D1704; }
+:root[data-theme='dark'][data-accent='stone']  { --accent: #A79F8C; --accent-deep: #86806F; --accent-bright: #C3BCAB; --accent-contrast: #17150F; }
 
 /* ── Reduced motion & transparency ────────────────────────────────────────
    Honour the OS switches rather than shipping our own toggle for them. */
@@ -240,6 +295,12 @@
     --mat-blur: none;
     --mat-blur-strong: none;
   }
+  .on-camera {
+    --mat-ultrathin: rgba(20, 19, 14, 0.94);
+    --mat-thin: rgba(20, 19, 14, 0.94);
+    --mat-regular: rgba(18, 17, 12, 0.96);
+    --mat-thick: rgba(16, 15, 11, 0.98);
+  }
 }
 
 /* Fallback for engines without backdrop-filter — swap to opaque surfaces. */
@@ -249,5 +310,11 @@
     --mat-thin: var(--surface-1);
     --mat-regular: var(--bg-elevated);
     --mat-thick: var(--bg-elevated);
+  }
+  .on-camera {
+    --mat-ultrathin: rgba(20, 19, 14, 0.92);
+    --mat-thin: rgba(20, 19, 14, 0.92);
+    --mat-regular: rgba(18, 17, 12, 0.95);
+    --mat-thick: rgba(16, 15, 11, 0.97);
   }
 }

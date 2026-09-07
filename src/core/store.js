@@ -12,16 +12,18 @@ import {
 import { LANG_CODES } from '../data/languages.js';
 import { ACHIEVEMENTS, levelFor, XP } from '../data/achievements.js';
 
-const KEY = 'lingualens.v4';
+const KEY = 'lemma.v1';
 const SCHEMA = 4;
-const LEGACY_KEYS = ['lingualens.v3'];
+// The app was called LinguaLens through v3 and v4. Both stores are still read
+// on first launch so a rename never costs anyone their streak.
+const LEGACY_KEYS = ['lingualens.v4', 'lingualens.v3'];
 
 /* ── Defaults ─────────────────────────────────────────────────────────── */
 
 const defaultSettings = () => ({
   targetLang: 'es',
-  theme: 'auto',              // 'auto' | 'light' | 'dark'
-  accent: 'lens',
+  theme: 'light',             // 'auto' | 'light' | 'dark'
+  accent: 'sage',
   confidence: 0.6,            // model score floor
   maxDetections: 6,           // labels drawn at once
   detectHz: 8,                // detection passes per second (render stays 60)
@@ -401,7 +403,7 @@ export function refreshBadges() {
 
 export function exportData() {
   return JSON.stringify({
-    app: 'LinguaLens',
+    app: 'Lemma',
     schema: SCHEMA,
     exportedAt: new Date().toISOString(),
     settings: state.settings,
@@ -412,13 +414,16 @@ export function exportData() {
 
 /**
  * Replace all stored data from a previously exported file.
- * @throws when the payload is not a LinguaLens export.
+ * @throws when the payload is not a Lemma export.
  */
 export function importData(json) {
   const data = JSON.parse(json);
-  if (data.app !== 'LinguaLens' || !data.progress) throw new Error('Not a LinguaLens backup file.');
-  // v3 and v4 exports are both accepted; normaliseProgress rewrites old keys.
-  if (data.schema > SCHEMA) throw new Error('This backup was made by a newer version of LinguaLens.');
+  if (!['Lemma', 'LinguaLens'].includes(data.app) || !data.progress) {
+    throw new Error('Not a Lemma backup file.');
+  }
+  // Exports from before the rename are still accepted; normaliseProgress
+  // rewrites their keys into the current id space.
+  if (data.schema > SCHEMA) throw new Error('This backup was made by a newer version of Lemma.');
   Object.assign(state.settings, defaultSettings(), data.settings || {});
   state.progress = normaliseProgress(data.progress);
   Object.assign(state.meta, defaultMeta(), data.meta || {});

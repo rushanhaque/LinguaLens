@@ -171,8 +171,8 @@ button.list-row:active,
   width: 27px;
   height: 27px;
   border-radius: var(--r-full);
-  background: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+  background: #FDFCF7;
+  box-shadow: 0 2px 5px rgba(60, 52, 34, 0.30);
   transition: transform var(--d-base) var(--spring);
 }
 .switch[aria-checked='true'] { background: var(--accent); }
@@ -206,15 +206,15 @@ button.list-row:active,
   height: 24px;
   margin-top: -10px;
   border-radius: var(--r-full);
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: #FDFCF7;
+  box-shadow: 0 2px 8px rgba(60, 52, 34, 0.30);
   transition: transform var(--d-fast) var(--spring);
 }
 .slider::-moz-range-thumb {
   width: 24px; height: 24px; border: 0;
   border-radius: var(--r-full);
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: #FDFCF7;
+  box-shadow: 0 2px 8px rgba(60, 52, 34, 0.30);
 }
 .slider:active::-webkit-slider-thumb { transform: scale(1.15); }
 
@@ -248,7 +248,7 @@ button.list-row:active,
   font-size: var(--t-caption-2);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: #FDFCF7;
   background: var(--red);
 }
 .badge-accent { background: var(--accent); color: var(--accent-contrast); }

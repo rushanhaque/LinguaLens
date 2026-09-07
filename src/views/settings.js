@@ -14,14 +14,25 @@ import { APP_VERSION } from '../version.js';
 
 let root = null;
 
+/* Each accent carries both its light and dark value, because a pigment tuned
+   to sit on paper reads as mud on charcoal, and vice versa. The swatch has to
+   show the colour the user will actually get in the theme they are in. */
 const ACCENTS = [
-  { id: 'lens', name: 'Lens', color: '#A8C93A' },
-  { id: 'blue', name: 'Blue', color: '#0A84FF' },
-  { id: 'purple', name: 'Purple', color: '#BF5AF2' },
-  { id: 'pink', name: 'Pink', color: '#FF375F' },
-  { id: 'orange', name: 'Orange', color: '#FF9F0A' },
-  { id: 'teal', name: 'Teal', color: '#40C8E0' }
+  { id: 'sage', name: 'Sage', light: '#5E6E4C', dark: '#9EB280' },
+  { id: 'clay', name: 'Clay', light: '#9A5C42', dark: '#C68F71' },
+  { id: 'indigo', name: 'Indigo', light: '#4C5A78', dark: '#8FA0C4' },
+  { id: 'plum', name: 'Plum', light: '#74506E', dark: '#B491AC' },
+  { id: 'ochre', name: 'Ochre', light: '#866B2E', dark: '#C6AC6C' },
+  { id: 'stone', name: 'Stone', light: '#5C5749', dark: '#A79F8C' }
 ];
+
+/** Which theme is actually rendering, resolving 'auto' against the OS. */
+function isDarkActive() {
+  const t = state.settings.theme;
+  if (t === 'dark') return true;
+  if (t === 'light') return false;
+  return matchMedia('(prefers-color-scheme: dark)').matches;
+}
 
 const REVIEW_STYLES = [
   { id: 'mixed', label: 'Mixed' },
@@ -77,7 +88,8 @@ export function renderSettings() {
             <div class="list-row-title">Accent colour</div>
             <div class="row wrap gap-3">${ACCENTS.map((a) => `
               <button class="swatch ${s.accent === a.id ? 'is-on' : ''}" data-accent="${a.id}"
-                style="background:${a.color}" aria-label="${esc(a.name)} accent"
+                style="background:${isDarkActive() ? a.dark : a.light}"
+                aria-label="${esc(a.name)} accent"
                 aria-pressed="${s.accent === a.id}"></button>`).join('')}</div>
           </div>
         </div>
@@ -112,7 +124,7 @@ export function renderSettings() {
           </div>
         </div>
         <p class="footnote" style="padding:var(--s-2) var(--s-1) 0">
-          Changing the model takes effect after a reload. LinguaLens measures how
+          Changing the model takes effect after a reload. Lemma measures how
           long each pass takes and lowers the rate automatically on slower devices.
         </p>
       </section>
@@ -202,7 +214,7 @@ export function renderSettings() {
         <div class="card">
           <div class="about-block">
             <div class="mark">${icon('lens')}</div>
-            <div class="title-3">LinguaLens</div>
+            <div class="title-3">Lemma</div>
             <p style="margin-top:var(--s-2)">
               Point your camera at the world and learn what everything is called.
               Object recognition runs entirely on your device — no images are ever
@@ -280,7 +292,7 @@ function wire() {
       setSetting(key, btn.dataset.value);
       $$('[data-value]', seg).forEach((b) => b.setAttribute('aria-selected', String(b === btn)));
       haptic('select');
-      if (key === 'theme') emit('theme');
+      if (key === 'theme') { emit('theme'); renderSettings(); }
     });
   });
 
@@ -383,7 +395,7 @@ function doExport() {
   try {
     const blob = new Blob([exportData()], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = el('a', { href: url, download: `lingualens-backup-${new Date().toISOString().slice(0, 10)}.json` });
+    const a = el('a', { href: url, download: `lemma-backup-${new Date().toISOString().slice(0, 10)}.json` });
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     toast('Backup saved', { emoji: '💾' });

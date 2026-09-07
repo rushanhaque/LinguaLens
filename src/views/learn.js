@@ -230,7 +230,7 @@ function vocabRows(words, known) {
     return `<div class="empty">
       <div class="empty-em">🌱</div>
       <div class="empty-title">Nothing started yet</div>
-      <div class="empty-text">Open a deck above to begin, or point the camera at something and LinguaLens will add it here.</div>
+      <div class="empty-text">Open a deck above to begin, or point the camera at something and Lemma will add it here.</div>
     </div>`;
   }
   const lang = state.settings.targetLang;

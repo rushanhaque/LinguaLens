@@ -13,18 +13,18 @@
  */
 
 export const CATEGORIES = {
-  people: { label: 'People', em: '🧑', color: '#FF9F0A' },
-  transport: { label: 'Transport', em: '🚗', color: '#0A84FF' },
-  street: { label: 'Street', em: '🚦', color: '#FF453A' },
-  animal: { label: 'Animals', em: '🐾', color: '#BF5AF2' },
-  accessory: { label: 'Accessories', em: '🎒', color: '#FF375F' },
-  sport: { label: 'Sport', em: '⚽', color: '#30D158' },
-  kitchen: { label: 'Kitchen', em: '🍴', color: '#64D2FF' },
-  food: { label: 'Food', em: '🍎', color: '#FFD60A' },
-  furniture: { label: 'Furniture', em: '🛋️', color: '#AC8E68' },
-  electronics: { label: 'Electronics', em: '💻', color: '#5E5CE6' },
-  appliance: { label: 'Appliances', em: '🔌', color: '#8E8E93' },
-  object: { label: 'Objects', em: '📦', color: '#A2845E' }
+  people: { label: 'People', em: '🧑', color: '#B57C46' },
+  transport: { label: 'Transport', em: '🚗', color: '#4F6D91' },
+  street: { label: 'Street', em: '🚦', color: '#A85548' },
+  animal: { label: 'Animals', em: '🐾', color: '#7A6182' },
+  accessory: { label: 'Accessories', em: '🎒', color: '#A66F78' },
+  sport: { label: 'Sport', em: '⚽', color: '#5F7B4C' },
+  kitchen: { label: 'Kitchen', em: '🍴', color: '#4E7D7B' },
+  food: { label: 'Food', em: '🍎', color: '#A88C3C' },
+  furniture: { label: 'Furniture', em: '🛋️', color: '#8A6A52' },
+  electronics: { label: 'Electronics', em: '💻', color: '#5A6180' },
+  appliance: { label: 'Appliances', em: '🔌', color: '#6B6659' },
+  object: { label: 'Objects', em: '📦', color: '#9A7B5C' }
 };
 
 export const DICT = {

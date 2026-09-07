@@ -18,7 +18,7 @@
 
 export const COLORS = {
   red: {
-    em: '🔴', swatch: '#D93025',
+    em: '🔴', swatch: '#C0483C',
     t: {
       es: { cite: 'rojo', ph: 'ROH-ho', m: 'rojo', f: 'roja' },
       fr: { cite: 'rouge', ph: 'roozh', m: 'rouge', f: 'rouge' },
@@ -35,7 +35,7 @@ export const COLORS = {
     }
   },
   orange: {
-    em: '🟠', swatch: '#F09300',
+    em: '🟠', swatch: '#CE8340',
     t: {
       es: { cite: 'naranja', ph: 'na-RAN-ha', m: 'naranja', f: 'naranja' },
       fr: { cite: 'orange', ph: 'o-RAHNZH', m: 'orange', f: 'orange' },
@@ -52,7 +52,7 @@ export const COLORS = {
     }
   },
   yellow: {
-    em: '🟡', swatch: '#F5C518',
+    em: '🟡', swatch: '#CFAE45',
     t: {
       es: { cite: 'amarillo', ph: 'a-ma-REE-yo', m: 'amarillo', f: 'amarilla' },
       fr: { cite: 'jaune', ph: 'zhohn', m: 'jaune', f: 'jaune' },
@@ -69,7 +69,7 @@ export const COLORS = {
     }
   },
   green: {
-    em: '🟢', swatch: '#1E8E3E',
+    em: '🟢', swatch: '#6C8F55',
     t: {
       es: { cite: 'verde', ph: 'VER-deh', m: 'verde', f: 'verde' },
       fr: { cite: 'vert', ph: 'vehr', m: 'vert', f: 'verte' },
@@ -86,7 +86,7 @@ export const COLORS = {
     }
   },
   blue: {
-    em: '🔵', swatch: '#1A73E8',
+    em: '🔵', swatch: '#5478A6',
     t: {
       es: { cite: 'azul', ph: 'a-SOOL', m: 'azul', f: 'azul' },
       fr: { cite: 'bleu', ph: 'bluh', m: 'bleu', f: 'bleue' },
@@ -103,7 +103,7 @@ export const COLORS = {
     }
   },
   purple: {
-    em: '🟣', swatch: '#8E24AA',
+    em: '🟣', swatch: '#87699A',
     t: {
       es: { cite: 'morado', ph: 'mo-RA-do', m: 'morado', f: 'morada' },
       fr: { cite: 'violet', ph: 'vyo-LEH', m: 'violet', f: 'violette' },
@@ -120,7 +120,7 @@ export const COLORS = {
     }
   },
   pink: {
-    em: '🩷', swatch: '#E91E8C',
+    em: '🩷', swatch: '#BE7C8E',
     t: {
       es: { cite: 'rosa', ph: 'RO-sa', m: 'rosa', f: 'rosa' },
       fr: { cite: 'rose', ph: 'rohz', m: 'rose', f: 'rose' },
@@ -137,7 +137,7 @@ export const COLORS = {
     }
   },
   brown: {
-    em: '🟤', swatch: '#795548',
+    em: '🟤', swatch: '#8A6A50',
     t: {
       es: { cite: 'marrón', ph: 'ma-RRON', m: 'marrón', f: 'marrón' },
       fr: { cite: 'marron', ph: 'ma-ROHN', m: 'marron', f: 'marron' },
@@ -154,7 +154,7 @@ export const COLORS = {
     }
   },
   black: {
-    em: '⚫', swatch: '#202124',
+    em: '⚫', swatch: '#2E2D26',
     t: {
       es: { cite: 'negro', ph: 'NEH-gro', m: 'negro', f: 'negra' },
       fr: { cite: 'noir', ph: 'nwahr', m: 'noir', f: 'noire' },
@@ -171,7 +171,7 @@ export const COLORS = {
     }
   },
   white: {
-    em: '⚪', swatch: '#F1F3F4',
+    em: '⚪', swatch: '#F2EFE4',
     t: {
       es: { cite: 'blanco', ph: 'BLAN-ko', m: 'blanco', f: 'blanca' },
       fr: { cite: 'blanc', ph: 'blahn', m: 'blanc', f: 'blanche' },
@@ -188,7 +188,7 @@ export const COLORS = {
     }
   },
   grey: {
-    em: '🩶', swatch: '#9AA0A6',
+    em: '🩶', swatch: '#98948A',
     t: {
       es: { cite: 'gris', ph: 'grees', m: 'gris', f: 'gris' },
       fr: { cite: 'gris', ph: 'gree', m: 'gris', f: 'grise' },

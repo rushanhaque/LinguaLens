@@ -55,7 +55,7 @@ for (const [key, pack] of Object.entries(PACKS)) {
   GROUPS[key] = { key, label: pack.label, em: pack.em, color: pack.color, source: SOURCE_LEX, blurb: pack.blurb };
 }
 GROUPS[COLOR_GROUP] = {
-  key: COLOR_GROUP, label: 'Colours', em: '🎨', color: '#FF2D55',
+  key: COLOR_GROUP, label: 'Colours', em: '🎨', color: '#A66F78',
   source: SOURCE_COL, blurb: 'Adjectives that agree'
 };
 

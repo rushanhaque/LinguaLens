@@ -13,14 +13,14 @@
  */
 
 export const PACKS = {
-  numbers: { label: 'Numbers', em: '🔢', color: '#0A84FF', blurb: 'Zero to a hundred' },
-  greetings: { label: 'Greetings', em: '👋', color: '#FF9F0A', blurb: 'Hello, please, thank you' },
-  family: { label: 'Family', em: '👨‍👩‍👧', color: '#FF375F', blurb: 'People closest to you' },
-  places: { label: 'Places', em: '🏙️', color: '#30D158', blurb: 'Getting around town' },
-  time: { label: 'Time', em: '🕰️', color: '#5E5CE6', blurb: 'Days, hours, when' },
-  verbs: { label: 'Verbs', em: '🏃', color: '#BF5AF2', blurb: 'The sixteen you need first' },
-  adjectives: { label: 'Adjectives', em: '✨', color: '#64D2FF', blurb: 'Describing things' },
-  questions: { label: 'Questions', em: '❓', color: '#FFD60A', blurb: 'Who, what, where, why' }
+  numbers: { label: 'Numbers', em: '🔢', color: '#4F6D91', blurb: 'Zero to a hundred' },
+  greetings: { label: 'Greetings', em: '👋', color: '#B57C46', blurb: 'Hello, please, thank you' },
+  family: { label: 'Family', em: '👨‍👩‍👧', color: '#A66F78', blurb: 'People closest to you' },
+  places: { label: 'Places', em: '🏙️', color: '#5F7B4C', blurb: 'Getting around town' },
+  time: { label: 'Time', em: '🕰️', color: '#5A6180', blurb: 'Days, hours, when' },
+  verbs: { label: 'Verbs', em: '🏃', color: '#7A6182', blurb: 'The sixteen you need first' },
+  adjectives: { label: 'Adjectives', em: '✨', color: '#4E7D7B', blurb: 'Describing things' },
+  questions: { label: 'Questions', em: '❓', color: '#A88C3C', blurb: 'Who, what, where, why' }
 };
 
 export const LEXICON = {

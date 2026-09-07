@@ -15,7 +15,7 @@ const SLIDES = [
   {
     em: '🔍',
     title: 'Point. Learn. Remember.',
-    body: 'Aim your camera at anything around you. LinguaLens names it in the language you are learning, with pronunciation, gender and colour.'
+    body: 'Aim your camera at anything around you. Lemma names it in the language you are learning, with pronunciation, gender and colour.'
   },
   {
     em: '🎨',
@@ -30,7 +30,7 @@ const SLIDES = [
   {
     em: '📷',
     title: 'Your browser will ask for the camera',
-    body: 'That prompt is your browser, not us. Choosing Allow is what lets LinguaLens see what you point at — and you can still study every word without it.',
+    body: 'That prompt is your browser, not us. Choosing Allow is what lets Lemma see what you point at — and you can still study every word without it.',
     primer: true
   },
   {

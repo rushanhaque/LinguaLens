@@ -8,10 +8,10 @@
  *     they are versioned by URL and are far too large to re-fetch casually.
  */
 
-const VERSION = 'v2.1.0';
-const SHELL_CACHE = `lingualens-shell-${VERSION}`;
-const VENDOR_CACHE = 'lingualens-vendor';   // survives shell upgrades on purpose
-const MODEL_CACHE = 'lingualens-model';
+const VERSION = 'v3.0.0';
+const SHELL_CACHE = `lemma-shell-${VERSION}`;
+const VENDOR_CACHE = 'lemma-vendor';   // survives shell upgrades on purpose
+const MODEL_CACHE = 'lemma-model';
 
 const SHELL = [
   './',
@@ -74,7 +74,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(keys
-      .filter((k) => k.startsWith('lingualens-shell-') && k !== SHELL_CACHE)
+      .filter((k) => k.startsWith('lemma-shell-') && k !== SHELL_CACHE)
       .map((k) => caches.delete(k)));
     await self.clients.claim();
   })());

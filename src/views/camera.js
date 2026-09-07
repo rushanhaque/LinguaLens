@@ -261,7 +261,7 @@ function render() {
   ctx.clearRect(0, 0, cw, ch);
 
   const seen = new Set();
-  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#A8C93A';
+  const accent = overlayAccent();
 
   const now = performance.now();
   for (const t of liveTracks) {
@@ -286,6 +286,26 @@ function render() {
     }
   }
 }
+
+/**
+ * The stroke colour for the viewfinder brackets.
+ *
+ * It has to be read from the stage, not the document root: the app's accent is
+ * tuned for dark ink on paper, which is invisible over video. `.on-camera`
+ * publishes a light variant for exactly this. Cached because getComputedStyle
+ * is not cheap and this runs every animation frame.
+ */
+let accentCache = null;
+function overlayAccent() {
+  if (accentCache) return accentCache;
+  if (!stage) return '#BACB9C';
+  const v = getComputedStyle(stage).getPropertyValue('--accent-bright').trim();
+  accentCache = v || '#BACB9C';
+  return accentCache;
+}
+
+/** Drop the cached colour when the theme or accent changes. */
+export function invalidateOverlayAccent() { accentCache = null; }
 
 function drawBox({ x, y, w, h }, fade, accent) {
   ctx.save();
@@ -622,12 +642,12 @@ async function capture() {
 
   try {
     const blob = await composeSnapshot();
-    const name = `lingualens-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '')}.png`;
+    const name = `lemma-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '')}.png`;
     const file = new File([blob], name, { type: 'image/png' });
 
     // Prefer the native share sheet on mobile; fall back to a download.
     if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'LinguaLens' });
+      await navigator.share({ files: [file], title: 'Lemma' });
     } else {
       const url = URL.createObjectURL(blob);
       const a = el('a', { href: url, download: name });
@@ -674,27 +694,27 @@ function composeSnapshot() {
   const styles = getComputedStyle(document.documentElement);
   const accent = styles.getPropertyValue('--accent').trim() || '#A8C93A';
 
-  g.fillStyle = '#0B0D06';
+  g.fillStyle = '#F4F1E8';
   g.fillRect(0, ch, cw, footer);
   g.fillStyle = accent;
   g.fillRect(0, ch, cw, 2);
 
   g.font = '700 15px -apple-system, system-ui, sans-serif';
-  g.fillStyle = '#fff';
+  g.fillStyle = '#24241D';
   g.textBaseline = 'top';
 
   const lang = LANGUAGES[state.settings.targetLang];
-  g.fillText(`LinguaLens · ${lang.flag} ${lang.name}`, 16, ch + 14);
+  g.fillText(`Lemma · ${lang.flag} ${lang.name}`, 16, ch + 14);
 
   g.font = '500 12px -apple-system, system-ui, sans-serif';
-  g.fillStyle = 'rgba(255,255,255,0.62)';
+  g.fillStyle = 'rgba(36,36,29,0.66)';
   const line = words
     .map((c) => { const t = translateItem(objId(c), state.settings.targetLang); return t ? `${t.em} ${t.word}` : ''; })
     .filter(Boolean).join('   ');
   g.fillText(line || 'Point the camera at an object to begin', 16, ch + 38);
 
   g.font = '500 10px -apple-system, system-ui, sans-serif';
-  g.fillStyle = 'rgba(255,255,255,0.32)';
+  g.fillStyle = 'rgba(36,36,29,0.38)';
   g.fillText('rushanhaque.online', 16, ch + 58);
 
   return new Promise((res, rej) =>
@@ -803,7 +823,7 @@ function clearLabels() {
 const ERROR_COPY = {
   [CameraError.DENIED]: {
     em: '🔒', title: 'Camera access blocked',
-    body: 'LinguaLens needs the camera to recognise objects. Allow camera access in your browser’s site settings, then reload.'
+    body: 'Lemma needs the camera to recognise objects. Allow camera access in your browser’s site settings, then reload.'
   },
   [CameraError.NOT_FOUND]: {
     em: '🎥', title: 'No camera found',
@@ -901,7 +921,7 @@ const TIPS = [
   ['🐢', 'Hold steady', 'A label appears only after the same object is seen for several frames, which keeps the overlay calm.'],
   ['👆', 'Tap a label', 'Open the full word card: gender, phonetics, example sentences, and the same word in every other language.'],
   ['🎓', 'Quiz yourself', 'Quiz mode blurs the translation so you can guess first, then tap to check.'],
-  ['🖼️', 'Use a photo', 'No good subject nearby? Load a picture from your library and LinguaLens will read it the same way.'],
+  ['🖼️', 'Use a photo', 'No good subject nearby? Load a picture from your library and Lemma will read it the same way.'],
   ['🔒', 'Nothing is uploaded', 'The model runs in this browser. Your camera feed never leaves the device.']
 ];
 

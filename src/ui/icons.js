@@ -11,12 +11,11 @@ const wrap = (body, extra = '') =>
         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${body}</svg>`;
 
 export const icons = {
-  /* Brand mark — an aperture blade ring around a focal dot. */
+  /* Brand mark — a lens over two lines of text. */
   lens: () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9"/>
-      <path d="M12 3v6.2M20.8 8.4l-5.9 2M18.4 19.1l-3.6-5M5.6 19.1l3.6-5M3.2 8.4l5.9 2"/>
-      <circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M7.9 10.3h8.2M7.9 13.7h4.7"/>
     </svg>`,
 
   camera: () => wrap('<path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.8l1.2-2h6.9l1.2 2h1.9A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.6"/>'),

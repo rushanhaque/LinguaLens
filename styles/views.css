@@ -81,14 +81,14 @@
 }
 
 /* ══ Camera view ═════════════════════════════════════════════════════════ */
-#view-camera { background: #000; }
+#view-camera { background: #14130E; }
 
 #stage {
   position: relative;
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  background: #000;
+  background: #14130E;
 }
 
 #webcam {
@@ -369,10 +369,10 @@
   content: '';
   width: 54px; height: 54px;
   border-radius: var(--r-full);
-  background: #fff;
+  background: #FBFAF4;
   transition: transform var(--d-fast) var(--spring), background var(--d-fast) ease;
 }
-.shutter:active::after { transform: scale(0.86); background: #dfe3d2; }
+.shutter:active::after { transform: scale(0.86); background: #DED8C6; }
 .shutter:active { transform: scale(0.96); }
 
 /* Full-frame white flash on capture. */
@@ -380,7 +380,7 @@
   position: absolute;
   inset: 0;
   z-index: 30;
-  background: #fff;
+  background: #FBFAF4;
   opacity: 0;
   pointer-events: none;
 }

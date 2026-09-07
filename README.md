@@ -1,13 +1,21 @@
-# LinguaLens
+# Lemma
 
-**Point your camera at the world and learn what everything is called.**
+**Look it up by looking.**
 
-LinguaLens recognises everyday objects through your camera and labels them, in real
+Lemma recognises everyday objects through your camera and labels them, in real
 time, in the language you are learning — with pronunciation, grammatical gender,
-example sentences, and a spaced-repetition system that turns what you spotted today
-into vocabulary you still know next month.
+colour, example sentences, and a spaced-repetition system that turns what you
+spotted today into vocabulary you still know next month.
 
 Everything runs in the browser. No image or video ever leaves the device.
+
+### The name
+
+A *lemma* is the dictionary headword of a word — the canonical form you look up,
+with its gender and inflections hanging off it. That is exactly what the app
+hands you when you point at something. In mathematics a lemma is also a small
+proved result you use to build a larger one, which is a fair description of what
+each word is on the way to a language.
 
 ---
 
@@ -19,7 +27,7 @@ switching, torch, zoom, tap-to-focus, a photo-library import for when there is
 nothing good to point at, and a branded snapshot export that shares through the
 native share sheet.
 
-**Colour** — LinguaLens reads the dominant colour of whatever you point at and
+**Colour** — Lemma reads the dominant colour of whatever you point at and
 names it *in agreement with the noun*: "la voiture rouge", "das rote Auto",
 "красное яблоко", "تفاحة حمراء". Adjective agreement is the grammar point
 learners get wrong longest, and it is the one thing a camera can teach directly.
@@ -78,6 +86,34 @@ adjective differently:
 When a phrase cannot be built correctly — a plural-only noun, say — nothing is
 shown rather than something wrong.
 
+## Design
+
+The interface is light-first and deliberately quiet: warm paper rather than
+white, warm ink rather than black, and muted pigment rather than screen
+primaries. Nothing in the palette is fully saturated, which is what makes it
+read as printed matter instead of as a dashboard.
+
+| Role | Light | Dark |
+| --- | --- | --- |
+| Ground | `#F4F1E8` warm paper | `#16150F` warm charcoal |
+| Surface | `#FCFBF6` | `#211F18` |
+| Ink | `#24241D` | `#F2EFE3` |
+| Accent | `#5E6E4C` deep sage | `#9EB280` light sage |
+
+Six accents ship — **Sage**, **Clay**, **Indigo**, **Plum**, **Ochre**,
+**Stone** — each with a separate light and dark value, because a pigment tuned
+to sit on paper reads as mud on charcoal. Status colours are muted to match, so
+a warning never shouts over the page.
+
+The camera view is the one exception. Its chrome sits on arbitrary live video,
+where a pale frosted panel would vanish against a white wall or the sky, so it
+keeps a warm dark frost in every theme — the same reason a camera app's controls
+are always dark.
+
+The app icon is generated, not hand-drawn: `node tools/make-icon.mjs` rasterises
+it with a dependency-free PNG encoder, so the artwork is reproducible rather than
+an opaque binary in the repo.
+
 ## Running it
 
 It is a static site with **no build step**. Serve the folder over HTTP:
@@ -123,6 +159,7 @@ so every session runs against one coherent snapshot.
 index.html            App shell and launch screen
 manifest.json         PWA metadata, icons, shortcuts
 sw.js                 Offline caching and update flow
+tools/make-icon.mjs   Generates icon-512.png with no dependencies
 
 styles/
   tokens.css          Design system: type ramp, materials, themes, accents

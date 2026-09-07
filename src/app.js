@@ -10,7 +10,8 @@ import { haptic, cue, unlockAudio } from './core/feedback.js';
 import { $, $$, toast, isSheetOpen, closeSheet, esc } from './ui/kit.js';
 import { icon } from './ui/icons.js';
 import { initCamera, paintCameraChrome, onCameraVisible, refreshCameraLanguage,
-         toggleQuiz, capture, flipCamera, togglePause, openLanguagePicker } from './views/camera.js';
+         toggleQuiz, capture, flipCamera, togglePause, openLanguagePicker,
+         invalidateOverlayAccent } from './views/camera.js';
 import { initLearn, refreshLearn, isSessionActive } from './views/learn.js';
 import { initProgress, renderProgress } from './views/progress.js';
 import { initSettings, renderSettings } from './views/settings.js';
@@ -39,7 +40,9 @@ function applyTheme() {
   const dark = theme === 'dark' ||
     (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', dark ? '#000000' : '#F2F3EC');
+  if (meta) meta.setAttribute('content', dark ? '#16150F' : '#F4F1E8');
+
+  invalidateOverlayAccent();
 }
 
 /* ── Tab routing ──────────────────────────────────────────────────────── */
@@ -79,8 +82,8 @@ export function go(tab) {
 
   history.replaceState({ tab }, '', `#${tab}`);
   document.title = tab === 'camera'
-    ? 'LinguaLens — Camera'
-    : `LinguaLens — ${TABS.find((t) => t.id === tab).label}`;
+    ? 'Lemma — Camera'
+    : `Lemma — ${TABS.find((t) => t.id === tab).label}`;
 }
 
 function updateDueBadge() {
@@ -190,7 +193,7 @@ function wirePWA() {
     // Offer it once the user has actually used the app, not on arrival.
     setTimeout(() => {
       if (!installPrompt || getStats().discovered < 3) return;
-      const t = toast('Add LinguaLens to your home screen', { emoji: '📲', duration: 7000 });
+      const t = toast('Add Lemma to your home screen', { emoji: '📲', duration: 7000 });
       t.style.pointerEvents = 'auto';
       t.style.cursor = 'pointer';
       t.addEventListener('click', async () => {
@@ -295,7 +298,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', saveNow);
 
 // Expose a tiny surface for debugging without leaking internals.
-window.LinguaLens = {
+window.Lemma = {
   go,
   get stats() { return getStats(); },
   get language() { return LANGUAGES[state.settings.targetLang]; }
