@@ -6,12 +6,15 @@
  * `state` and call actions, then re-render on the `change` event.
  */
 
-import { DICT, ALL_CLASSES, CATEGORIES } from '../data/dictionary.js';
+import {
+  itemMeta, objId, idsInGroup, GROUP_KEYS, TOTAL_ITEMS, isCameraItem
+} from '../data/vocab.js';
 import { LANG_CODES } from '../data/languages.js';
 import { ACHIEVEMENTS, levelFor, XP } from '../data/achievements.js';
 
-const KEY = 'lingualens.v3';
-const SCHEMA = 3;
+const KEY = 'lingualens.v4';
+const SCHEMA = 4;
+const LEGACY_KEYS = ['lingualens.v3'];
 
 /* ── Defaults ─────────────────────────────────────────────────────────── */
 
@@ -31,6 +34,8 @@ const defaultSettings = () => ({
   haptics: true,
   sound: true,
   quizMode: false,
+  showColors: true,           // read dominant colour off detected objects
+  colorPhrases: true,         // render colour + noun as an agreeing phrase
   phraseFrame: 'this_is',
   dailyGoal: 15,              // reviews per day
   onboarded: false,
@@ -38,7 +43,7 @@ const defaultSettings = () => ({
 });
 
 const defaultProgress = () => ({
-  // Keyed by language code, then by COCO class.
+  // Keyed by language code, then by vocab item id ('obj:apple' / 'lex:mother').
   // { seen, discoveredAt, lastSeen, correct, wrong, srs:{reps,lapses,ease,interval,due} }
 });
 
@@ -80,18 +85,45 @@ let saveTimer = null;
 function load() {
   let raw;
   try { raw = localStorage.getItem(KEY); } catch { return; }   // private mode
-  if (!raw) { migrateLegacy(); return; }
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      if (data.schema === SCHEMA) {
+        Object.assign(state.settings, data.settings || {});
+        state.progress = normaliseProgress(data.progress || {});
+        Object.assign(state.meta, data.meta || {});
+        return;
+      }
+    } catch { /* corrupt payload — fall through to the migrations */ }
+  }
+  if (migrateV3()) return;
+  migratePrototype();
+}
+
+/**
+ * v3 stored progress keyed by bare COCO class name. v4 namespaces every entry
+ * so lexicon words can share the same store, so the keys are rewritten in
+ * place. Nobody loses a streak to a schema bump.
+ */
+function migrateV3() {
+  let raw = null;
+  for (const key of LEGACY_KEYS) {
+    try { raw = localStorage.getItem(key); } catch { return false; }
+    if (raw) break;
+  }
+  if (!raw) return false;
   try {
     const data = JSON.parse(raw);
-    if (data.schema !== SCHEMA) return;                        // future/old: start clean
     Object.assign(state.settings, data.settings || {});
-    state.progress = data.progress || defaultProgress();
+    state.progress = normaliseProgress(data.progress || {});
     Object.assign(state.meta, data.meta || {});
-  } catch { /* corrupt payload — fall back to defaults */ }
+    saveNow();
+    return true;
+  } catch { return false; }
 }
 
 /** Carry across vocabulary from the v1/v2 prototype so nobody loses progress. */
-function migrateLegacy() {
+function migratePrototype() {
   let legacy;
   try { legacy = localStorage.getItem('ll_vocab'); } catch { return; }
   if (!legacy) return;
@@ -100,12 +132,44 @@ function migrateLegacy() {
     const lang = state.settings.targetLang;
     state.progress[lang] = state.progress[lang] || {};
     for (const cls of Object.keys(vocab)) {
-      if (!DICT[cls]) continue;
-      state.progress[lang][cls] = blankWord(vocab[cls].discovered || Date.now());
-      state.progress[lang][cls].seen = vocab[cls].count || 1;
+      const id = objId(cls);
+      if (!itemMeta(id)) continue;
+      state.progress[lang][id] = blankWord(vocab[cls].discovered || Date.now());
+      state.progress[lang][id].seen = vocab[cls].count || 1;
     }
     save();
   } catch { /* ignore malformed legacy data */ }
+}
+
+/**
+ * Rewrite any un-namespaced keys to item ids and drop entries whose word no
+ * longer exists, so a stale record can never crash a render.
+ */
+function normaliseProgress(progress) {
+  const out = {};
+  for (const [lang, words] of Object.entries(progress || {})) {
+    if (!words || typeof words !== 'object') continue;
+    out[lang] = {};
+    for (const [key, rec] of Object.entries(words)) {
+      if (!rec || typeof rec !== 'object') continue;
+      const id = key.includes(':') ? key : objId(key);
+      if (!itemMeta(id)) continue;
+      // Merge rather than overwrite if both forms somehow exist.
+      const prev = out[lang][id];
+      out[lang][id] = prev && prev.discoveredAt <= rec.discoveredAt ? prev : withDefaults(rec);
+    }
+  }
+  return out;
+}
+
+/** Fill in any field a older record may predate. */
+function withDefaults(rec) {
+  const base = blankWord(rec.discoveredAt || Date.now());
+  return {
+    ...base,
+    ...rec,
+    srs: { ...base.srs, ...(rec.srs || {}) }
+  };
 }
 
 function persist() {
@@ -168,26 +232,49 @@ export function langProgress(lang = state.settings.targetLang) {
   return state.progress[lang];
 }
 
-export function wordRecord(cls, lang = state.settings.targetLang) {
-  return langProgress(lang)[cls] || null;
+export function wordRecord(id, lang = state.settings.targetLang) {
+  return langProgress(lang)[id] || null;
+}
+
+/** Create the record for an item if it does not exist yet. */
+export function ensureRecord(id, lang = state.settings.targetLang) {
+  const words = langProgress(lang);
+  if (!words[id]) words[id] = blankWord();
+  return words[id];
 }
 
 /**
- * Record that a class was seen through the camera.
+ * Record that an object was seen through the camera.
+ * @param {string} cls  COCO class name
  * @returns {boolean} true when this is the first sighting (a "discovery").
  */
 export function recordSighting(cls, lang = state.settings.targetLang) {
-  if (!DICT[cls]) return false;
+  const id = objId(cls);
+  if (!itemMeta(id)) return false;
   const words = langProgress(lang);
-  const isNew = !words[cls];
+  const isNew = !words[id];
   if (isNew) {
-    words[cls] = blankWord();
+    words[id] = blankWord();
     addXP(XP.discover);
   }
-  words[cls].seen++;
-  words[cls].lastSeen = Date.now();
+  words[id].seen++;
+  words[id].lastSeen = Date.now();
   save();
-  if (isNew) emit('discovered', { cls, lang });
+  if (isNew) emit('discovered', { id, cls, lang });
+  return isNew;
+}
+
+/** Mark a non-camera word as started, so lexicon packs can enter the queue. */
+export function recordStudied(id, lang = state.settings.targetLang) {
+  if (!itemMeta(id)) return false;
+  const words = langProgress(lang);
+  const isNew = !words[id];
+  if (isNew) {
+    words[id] = blankWord();
+    addXP(XP.discover);
+    emit('discovered', { id, lang });
+  }
+  save();
   return isNew;
 }
 
@@ -258,17 +345,19 @@ export function getStats() {
     (l) => state.progress[l] && Object.keys(state.progress[l]).length > 0
   ).length;
 
-  const clearedCategories = Object.keys(CATEGORIES).filter((cat) => {
-    const inCat = ALL_CLASSES.filter((c) => DICT[c].cat === cat);
-    return inCat.length > 0 && inCat.every((c) => words[c]);
+  const clearedCategories = GROUP_KEYS.filter((group) => {
+    const ids = idsInGroup(group);
+    return ids.length > 0 && ids.every((id) => words[id]);
   }).length;
 
   const reviews = state.meta.totalReviews;
+  const objectsFound = keys.filter(isCameraItem).length;
 
   return {
     lang,
     discovered: keys.length,
-    total: ALL_CLASSES.length,
+    total: TOTAL_ITEMS,
+    objectsFound,
     mastered,
     reviews,
     accuracy: reviews ? state.meta.totalCorrect / reviews : 0,
@@ -290,7 +379,7 @@ export function languageBreakdown() {
   return LANG_CODES.map((code) => ({
     code,
     count: state.progress[code] ? Object.keys(state.progress[code]).length : 0,
-    total: ALL_CLASSES.length
+    total: TOTAL_ITEMS
   })).sort((a, b) => b.count - a.count);
 }
 
@@ -328,8 +417,10 @@ export function exportData() {
 export function importData(json) {
   const data = JSON.parse(json);
   if (data.app !== 'LinguaLens' || !data.progress) throw new Error('Not a LinguaLens backup file.');
+  // v3 and v4 exports are both accepted; normaliseProgress rewrites old keys.
+  if (data.schema > SCHEMA) throw new Error('This backup was made by a newer version of LinguaLens.');
   Object.assign(state.settings, defaultSettings(), data.settings || {});
-  state.progress = data.progress;
+  state.progress = normaliseProgress(data.progress);
   Object.assign(state.meta, defaultMeta(), data.meta || {});
   saveNow();
   emit('change');

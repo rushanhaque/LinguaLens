@@ -170,6 +170,18 @@ export const PHRASE_LABELS = {
   how_much: 'How much is the …?'
 };
 
+/**
+ * Fill an English gloss template with a noun, fixing up the indefinite
+ * article. "I see a orange" reads as a bug even though it is only the gloss.
+ */
+export function glossFor(frame, noun) {
+  const template = PHRASE_LABELS[frame] || PHRASE_LABELS.this_is;
+  const needsAn = /^[aeiou]/i.test(noun) && !/^(uni|use|eu|one)/i.test(noun);
+  return template
+    .replace(/a …/, (needsAn ? 'an ' : 'a ') + noun)
+    .replace('…', noun);
+}
+
 /* ── Article resolution ───────────────────────────────────────────────────
    Dictionary entries store the bare noun plus a gender tag. Articles are
    derived here so a single stored form drives definite, indefinite and
@@ -208,16 +220,23 @@ export function resolveForms(lang, word, gender) {
   // 'p' marks plural-only nouns (les ciseaux, las tijeras) — the singular
   // article tables do not apply, so the bare form is used everywhere.
   if (gender === 'p' || !table || !gender) {
-    return { word, gender: gender || '', def: word, indef: word, defAcc: word, indefAcc: word };
+    return {
+      word, gender: gender || '', plural: gender === 'p',
+      def: word, indef: word, defAcc: word, indefAcc: word,
+      article: '', articleIndef: ''
+    };
   }
   const g = table.def[gender] ? gender : Object.keys(table.def)[0];
   return {
     word,
     gender: g,
+    plural: false,
     def: elide(lang, table.def[g], word),
     indef: elide(lang, table.indef[g], word),
     defAcc: elide(lang, (table.defAcc || table.def)[g], word),
-    indefAcc: elide(lang, (table.indefAcc || table.indef)[g], word)
+    indefAcc: elide(lang, (table.indefAcc || table.indef)[g], word),
+    article: table.def[g],
+    articleIndef: table.indef[g]
   };
 }
 
@@ -251,4 +270,64 @@ export function genderLabel(lang, gender) {
     ar: { m: 'm.', f: 'f.' }
   };
   return (map[lang] && map[lang][gender]) || '';
+}
+
+/* ── Adjective placement ──────────────────────────────────────────────────
+   Colour is the attribute a camera can actually read, which makes it the
+   natural way to teach adjective agreement. Each language owns its own rule
+   rather than sharing a lowest-common-denominator one:
+
+     Romance   noun follows the article, adjective follows the noun, and the
+               adjective agrees in gender  ("la pomme rouge")
+     Germanic  adjective sits between article and noun in its attributive
+               form; in the nominative singular this is invariant, which is
+               why only one `attr` form is stored  ("der rote Apfel")
+     Slavic    adjective precedes and agrees in gender  ("красное яблоко")
+     CJK       adjective precedes; Japanese uses i-adjectives or the の
+               particle, Chinese 的, Korean the attributive form
+     Arabic    adjective follows and agrees; two indefinites juxtaposed read
+               as "a red apple"  ("تفاحة حمراء")
+
+   n comes from resolveForms(), c from colorForms(). */
+
+const COLOR_PHRASE = {
+  es: (n, c) => `${n.article} ${n.word} ${c[n.gender] || c.m}`,
+  fr: (n, c) => `${n.def} ${n.gender === 'f' ? c.f : c.m}`,
+  it: (n, c) => `${n.def} ${n.gender === 'f' ? c.f : c.m}`,
+  pt: (n, c) => `${n.article} ${n.word} ${n.gender === 'f' ? c.f : c.m}`,
+  de: (n, c) => `${n.article} ${c.attr} ${n.word}`,
+  nl: (n, c) => `${n.article} ${c.attr} ${n.word}`,
+  ru: (n, c) => `${c[n.gender] || c.m} ${n.word}`,
+  ja: (n, c) => `${c.attr}${n.word}`,
+  ko: (n, c) => `${c.attr} ${n.word}`,
+  zh: (n, c) => `${c.attr}${n.word}`,
+  hi: (n, c) => `${c[n.gender] || c.m} ${n.word}`,
+  ar: (n, c) => `${n.word} ${c[n.gender] || c.m}`
+};
+
+/**
+ * Build an agreeing colour + noun phrase, e.g. "la voiture rouge".
+ *
+ * @param {string} lang
+ * @param {string} word    bare noun
+ * @param {string} gender  noun gender tag from the dictionary
+ * @param {object} forms   colour forms from colorForms()
+ * @returns {string|null}  null when the phrase cannot be built correctly
+ */
+export function buildColorPhrase(lang, word, gender, forms) {
+  const fn = COLOR_PHRASE[lang];
+  if (!fn || !forms) return null;
+  const n = resolveForms(lang, word, gender);
+  // Plural-only nouns would need plural adjective agreement, which is not
+  // stored — showing a singular adjective there would teach the wrong form.
+  if (n.plural) return null;
+  try {
+    return fn(n, forms).replace(/\s+/g, ' ').trim();
+  } catch { return null; }
+}
+
+/** "The X is <colour>" — used when an attributive phrase would be ambiguous. */
+export function colorIsPhrase(lang, word, gender, forms) {
+  const phrase = buildColorPhrase(lang, word, gender, forms);
+  return phrase || (forms ? forms.cite : null);
 }

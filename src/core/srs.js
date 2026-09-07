@@ -11,7 +11,7 @@
  */
 
 import { state, langProgress, save, logReview, emit } from './store.js';
-import { DICT, ALL_CLASSES } from '../data/dictionary.js';
+import { itemMeta, idsInGroup, ALL_ITEM_IDS, isCameraItem } from '../data/vocab.js';
 
 const DAY = 86400000;
 const MIN_EASE = 1.3;
@@ -46,19 +46,19 @@ export function previewIntervals(rec) {
 
 /**
  * Apply a grade to a card and reschedule it.
- * @param {string} cls   COCO class key
- * @param {'again'|'hard'|'good'} grade
+ * @param {string} id    vocab item id ('obj:apple' / 'lex:mother')
+ * @param {'again'|'hard'|'good'} grade_
  * @param {string} [lang]
  */
-export function grade(cls, grade_, lang = state.settings.targetLang) {
+export function grade(id, grade_, lang = state.settings.targetLang) {
   const words = langProgress(lang);
-  if (!words[cls]) {
-    words[cls] = {
+  if (!words[id]) {
+    words[id] = {
       discoveredAt: Date.now(), lastSeen: Date.now(), seen: 0, correct: 0, wrong: 0,
       srs: { reps: 0, lapses: 0, ease: 2.5, interval: 0, due: Date.now() }
     };
   }
-  const rec = words[cls];
+  const rec = words[id];
   const s = rec.srs;
   const correct = grade_ !== 'again';
 
@@ -85,7 +85,7 @@ export function grade(cls, grade_, lang = state.settings.targetLang) {
 
   logReview(correct);
   save();
-  emit('graded', { cls, lang, grade: grade_, correct });
+  emit('graded', { id, lang, grade: grade_, correct });
   return { correct, interval: s.interval };
 }
 
@@ -96,7 +96,7 @@ export function dueCards(lang = state.settings.targetLang) {
   const words = langProgress(lang);
   const now = Date.now();
   return Object.keys(words)
-    .filter((c) => DICT[c] && words[c].srs.due <= now)
+    .filter((id) => itemMeta(id) && words[id].srs.due <= now)
     .sort((a, b) => words[a].srs.due - words[b].srs.due);
 }
 
@@ -107,7 +107,7 @@ export function dueCount(lang = state.settings.targetLang) {
 /** Discovered but never reviewed — the "new" pile. */
 export function newCards(lang = state.settings.targetLang) {
   const words = langProgress(lang);
-  return Object.keys(words).filter((c) => DICT[c] && words[c].srs.reps === 0);
+  return Object.keys(words).filter((id) => itemMeta(id) && words[id].srs.reps === 0);
 }
 
 /**
@@ -116,40 +116,44 @@ export function newCards(lang = state.settings.targetLang) {
  * @param {object}  opts
  * @param {string}  [opts.lang]
  * @param {number}  [opts.limit=20]      max cards
- * @param {string}  [opts.category]      restrict to one category
+ * @param {string}  [opts.group]         restrict to one category or pack
  * @param {boolean} [opts.includeUndiscovered=false]
- *        Allow words never seen through the camera. Off by default — the
- *        camera-first loop is the point of the app — but on for category
+ *        Allow words never encountered yet. Off by default for the mixed
+ *        queue — the camera-first loop is the point of the app — but on for
  *        decks the learner explicitly opens.
  */
 export function buildSession(opts = {}) {
   const {
     lang = state.settings.targetLang,
     limit = 20,
-    category = null,
+    group = null,
     includeUndiscovered = false
   } = opts;
 
   const words = langProgress(lang);
-  const inScope = (c) => DICT[c] && (!category || DICT[c].cat === category);
+  const scope = group ? new Set(idsInGroup(group)) : null;
+  const inScope = (id) => !!itemMeta(id) && (!scope || scope.has(id));
 
   const due = dueCards(lang).filter(inScope);
-  const fresh = newCards(lang).filter(inScope).filter((c) => !due.includes(c));
+  const dueSet = new Set(due);
+  const fresh = newCards(lang).filter((id) => inScope(id) && !dueSet.has(id));
 
   let pool = [...due, ...fresh];
 
   if (pool.length < limit && includeUndiscovered) {
-    const rest = ALL_CLASSES
-      .filter((c) => inScope(c) && !words[c])
-      .sort((a, b) => DICT[a].lvl - DICT[b].lvl);
+    const seen = new Set(pool);
+    const rest = (scope ? [...scope] : ALL_ITEM_IDS)
+      .filter((id) => !words[id] && !seen.has(id))
+      .sort((a, b) => (itemMeta(a)?.lvl || 1) - (itemMeta(b)?.lvl || 1));
     pool = pool.concat(rest);
   }
 
   if (pool.length < limit) {
     // Top up with the least-recently-reviewed known cards so a short session
     // is still a full session.
+    const seen = new Set(pool);
     const filler = Object.keys(words)
-      .filter((c) => inScope(c) && !pool.includes(c))
+      .filter((id) => inScope(id) && !seen.has(id))
       .sort((a, b) => words[a].srs.due - words[b].srs.due);
     pool = pool.concat(filler);
   }
@@ -158,15 +162,22 @@ export function buildSession(opts = {}) {
 }
 
 /** Distractor options for a multiple-choice question. */
-export function distractors(cls, count = 3) {
-  const target = DICT[cls];
+export function distractors(id, count = 3) {
+  const target = itemMeta(id);
   if (!target) return [];
-  const sameCat = ALL_CLASSES.filter((c) => c !== cls && DICT[c].cat === target.cat);
-  const other = ALL_CLASSES.filter((c) => c !== cls && DICT[c].cat !== target.cat);
-  // Same-category distractors are harder and more useful; fall back to the
-  // wider pool when a category is small.
-  const picked = shuffle(sameCat).slice(0, count);
-  if (picked.length < count) picked.push(...shuffle(other).slice(0, count - picked.length));
+  const sameGroup = idsInGroup(target.group).filter((x) => x !== id);
+  // Same-group distractors are harder and more useful; fall back to items of
+  // the same kind (object vs lexicon) before going wider, so a "numbers"
+  // question is never answered with a picture of a sofa.
+  const sameKind = ALL_ITEM_IDS.filter(
+    (x) => x !== id && !sameGroup.includes(x) && isCameraItem(x) === isCameraItem(id)
+  );
+  const picked = shuffle(sameGroup).slice(0, count);
+  if (picked.length < count) picked.push(...shuffle(sameKind).slice(0, count - picked.length));
+  if (picked.length < count) {
+    const rest = ALL_ITEM_IDS.filter((x) => x !== id && !picked.includes(x));
+    picked.push(...shuffle(rest).slice(0, count - picked.length));
+  }
   return picked;
 }
 

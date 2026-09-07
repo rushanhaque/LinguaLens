@@ -6,10 +6,14 @@
  * label positions interpolate at display refresh so motion stays smooth.
  */
 
-import { DICT, translate } from '../data/dictionary.js';
-import { LANGUAGES, genderLabel, citationForm } from '../data/languages.js';
+import { DICT } from '../data/dictionary.js';
+import { objId, translateItem } from '../data/vocab.js';
+import { COLORS, colorForms } from '../data/colors.js';
+import { LANGUAGES, genderLabel, citationForm, buildColorPhrase } from '../data/languages.js';
 import { state, setSetting, recordSighting, refreshBadges, logSnapshot, emit } from '../core/store.js';
 import { createTracker } from '../core/tracker.js';
+import { createPalette } from '../core/palette.js';
+import { createGovernor } from '../core/governor.js';
 import { createCamera, CameraError } from '../core/camera.js';
 import { speak } from '../core/speech.js';
 import { cue, haptic, unlockAudio } from '../core/feedback.js';
@@ -20,6 +24,10 @@ import { openWordSheet } from './wordSheet.js';
 let video, canvas, ctx, labelLayer, stage, statusPill, strip;
 let cam = null;
 let tracker = createTracker();
+const palette = createPalette();
+const governor = createGovernor();
+/** trackId → colour key most recently read off that object. */
+const trackColors = new Map();
 let model = null;
 let running = false;
 let lastDetect = 0;
@@ -125,7 +133,9 @@ function loop(now) {
   while (frameTimes.length && now - frameTimes[0] > 1000) frameTimes.shift();
   state.runtime.fps = frameTimes.length;
 
-  const interval = 1000 / clamp(state.settings.detectHz, 2, 20);
+  // The governor spends a fixed share of wall-clock time on inference, so a
+  // slow device drops its detection rate instead of dropping frames.
+  const interval = governor.intervalMs(clamp(state.settings.detectHz, 2, 20));
   if (!paused && model && video.readyState >= 2 && now - lastDetect >= interval) {
     lastDetect = now;
     detect();                            // fire-and-forget; render never waits
@@ -140,18 +150,40 @@ let detecting = false;
 async function detect() {
   if (detecting) return;                 // never queue up inference calls
   detecting = true;
+  const t0 = performance.now();
   try {
     const raw = await model.detect(video, 20, 0.25);
+    governor.sample(performance.now() - t0);
+
     const { w, h } = cam.videoSize;
     liveTracks = tracker.update(raw, w, h, {
       minScore: state.settings.confidence,
       maxOut: state.settings.maxDetections
     });
     state.runtime.live = liveTracks;
+    readColors(liveTracks);
     handleDiscoveries(liveTracks);
     syncStrip(liveTracks);
   } catch { /* a dropped frame is not worth reporting */ }
   detecting = false;
+}
+
+/**
+ * Sample the dominant colour inside each track. Runs on the detection cadence
+ * rather than per frame — colour barely changes between passes, and the crop
+ * plus readback is not free.
+ */
+function readColors(tracks) {
+  if (!state.settings.showColors) { trackColors.clear(); return; }
+  const live = new Set();
+  for (const t of tracks) {
+    live.add(t.id);
+    const key = palette.readStable(video, t.raw || t.bbox, t.id);
+    if (key) trackColors.set(t.id, key);
+    else if (!trackColors.has(t.id)) trackColors.delete(t.id);
+  }
+  for (const id of [...trackColors.keys()]) if (!live.has(id)) trackColors.delete(id);
+  palette.prune(live);
 }
 
 /* A track stays alive for many frames, so counting a sighting per frame would
@@ -166,9 +198,10 @@ function handleDiscoveries(tracks) {
     countedTracks.add(t.id);
     const isNew = recordSighting(t.cls);
     if (!isNew) continue;
-    const tr = translate(t.cls, state.settings.targetLang);
+    const tr = translateItem(objId(t.cls), state.settings.targetLang);
+    if (!tr) continue;
     cue('discover', 'success');
-    toast(`${tr.word} — new word!`, { emoji: DICT[t.cls].em });
+    toast(`${tr.word} — new word!`, { emoji: tr.em });
     if (state.settings.speakOnDiscover) {
       speak(citationForm(state.settings.targetLang, tr.word, tr.gender));
     }
@@ -230,8 +263,10 @@ function render() {
   const seen = new Set();
   const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#A8C93A';
 
+  const now = performance.now();
   for (const t of liveTracks) {
-    const p = project(t.bbox);
+    // Extrapolate from the last measurement so labels keep up during a pan.
+    const p = project(tracker.predict(t, now));
     if (!p) continue;
     const entry = DICT[t.cls];
     if (!entry) continue;
@@ -294,12 +329,14 @@ function roundRect(x, y, w, h, r) {
 
 function positionLabel(t, p, fade) {
   let node = labelNodes.get(t.id);
-  const tr = translate(t.cls, state.settings.targetLang);
+  const id = objId(t.cls);
+  const tr = translateItem(id, state.settings.targetLang);
   if (!tr) return;
+  const colorKey = trackColors.get(t.id) || null;
 
   if (!node) {
     node = el('button', { class: 'ar-label', type: 'button' });
-    node.addEventListener('click', () => onLabelTap(node, t.cls, tr));
+    node.addEventListener('click', () => onLabelTap(node, t.id, t.cls, tr));
     labelLayer.append(node);
     labelNodes.set(t.id, node);
     node.dataset.cls = t.cls;
@@ -308,11 +345,13 @@ function positionLabel(t, p, fade) {
   // Only touch the DOM when the rendered content actually changes.
   const sig = [t.cls, state.settings.targetLang, state.settings.showPhonetics,
     state.settings.showGender, state.settings.showConfidence,
+    state.settings.showColors ? colorKey : '',
+    state.settings.colorPhrases ? 'p' : '',
     state.settings.showConfidence ? Math.round(t.score * 20) : 0].join('|');
   if (node.dataset.sig !== sig) {
     node.dataset.sig = sig;
     node.dataset.cls = t.cls;
-    node.innerHTML = labelMarkup(t, tr);
+    node.innerHTML = labelMarkup(t, tr, colorKey);
     node.setAttribute('aria-label', `${tr.word}, ${t.cls}. Tap for details.`);
   }
 
@@ -336,23 +375,43 @@ function positionLabel(t, p, fade) {
   node.style.transform = `translate3d(${Math.round(lx)}px, ${Math.round(ly)}px, 0)`;
 }
 
-function labelMarkup(t, tr) {
-  const g = state.settings.showGender ? genderLabel(state.settings.targetLang, tr.gender) : '';
-  const rtl = LANGUAGES[state.settings.targetLang].rtl;
+function labelMarkup(t, tr, colorKey) {
+  const lang = state.settings.targetLang;
+  const g = state.settings.showGender ? genderLabel(lang, tr.gender) : '';
+  const rtl = LANGUAGES[lang].rtl;
+
+  /* Colour row: the phrase when we can build one that agrees correctly,
+     otherwise just the colour word. Never a phrase we are unsure of. */
+  let colorRow = '';
+  if (colorKey && state.settings.showColors && COLORS[colorKey]) {
+    const forms = colorForms(colorKey, lang);
+    const phrase = state.settings.colorPhrases
+      ? buildColorPhrase(lang, tr.word, tr.gender, forms)
+      : null;
+    const text = phrase || (forms ? forms.cite : '');
+    if (text) {
+      colorRow = `<div class="ar-color">
+        <span class="sw" style="background:${COLORS[colorKey].swatch}"></span>
+        <span class="phrase" ${rtl ? 'dir="rtl"' : ''}>${esc(text)}</span>
+      </div>`;
+    }
+  }
+
   return `
     <div class="ar-word" ${rtl ? 'dir="rtl"' : ''}>
       <span class="w">${esc(tr.word)}</span>
       ${g ? `<span class="g">${esc(g)}</span>` : ''}
     </div>
     ${state.settings.showPhonetics && tr.phonetic ? `<div class="ar-phon">${esc(tr.phonetic)}</div>` : ''}
+    ${colorRow}
     <div class="ar-en">
-      <span class="em">${esc(DICT[t.cls].em)}</span>
+      <span class="em">${esc(tr.em)}</span>
       <span class="txt">${esc(t.cls)}</span>
       ${state.settings.showConfidence ? `<span class="conf">${Math.round(t.score * 100)}%</span>` : ''}
     </div>`;
 }
 
-function onLabelTap(node, cls, tr) {
+function onLabelTap(node, trackId, cls, tr) {
   unlockAudio();
   if (state.settings.quizMode && !node.classList.contains('is-revealed')) {
     node.classList.add('is-revealed');
@@ -361,7 +420,7 @@ function onLabelTap(node, cls, tr) {
     return;
   }
   haptic('light');
-  openWordSheet(cls);
+  openWordSheet(objId(cls), trackColors.get(trackId) || null);
 }
 
 /* ── Detected strip ───────────────────────────────────────────────────── */
@@ -371,13 +430,18 @@ function syncStrip(tracks) {
   for (const t of tracks) {
     if (present.has(t.cls)) continue;
     present.add(t.cls);
-    const tr = translate(t.cls, state.settings.targetLang);
+    const tr = translateItem(objId(t.cls), state.settings.targetLang);
     if (!tr) continue;
 
     let card = stripCards.get(t.cls);
     if (!card) {
+      const cls = t.cls;
+      const trackId = t.id;
       card = el('button', { class: 'detected-card', type: 'button' });
-      card.addEventListener('click', () => { haptic('light'); openWordSheet(t.cls); });
+      card.addEventListener('click', () => {
+        haptic('light');
+        openWordSheet(objId(cls), trackColors.get(trackId) || null);
+      });
       strip.append(card);
       stripCards.set(t.cls, card);
       // Keep the strip short so it never becomes a wall of cards.
@@ -391,7 +455,7 @@ function syncStrip(tracks) {
     if (card.dataset.sig !== sig) {
       card.dataset.sig = sig;
       card.innerHTML =
-        `<span class="em">${esc(DICT[t.cls].em)}</span>` +
+        `<span class="em">${esc(tr.em)}</span>` +
         `<span class="body"><span class="w">${esc(tr.word)}</span>` +
         `<span class="e">${esc(t.cls)}</span></span>`;
     }
@@ -403,8 +467,8 @@ function syncStrip(tracks) {
 }
 
 function clearStrip() {
-  strip.innerHTML = '';
   stripCards.clear();
+  if (strip) strip.innerHTML = '';
 }
 
 /* ── Status pill ──────────────────────────────────────────────────────── */
@@ -412,9 +476,13 @@ function clearStrip() {
 function updateStatus() {
   if (!statusPill) return;
   statusPill.classList.toggle('is-paused', paused);
+  const g = governor.stats(clamp(state.settings.detectHz, 2, 20));
+  state.runtime.detectStats = g;
+  // Surfacing the throttle is honest: the user can see the device is the limit
+  // rather than assuming detection is broken.
   const label = paused
     ? 'Paused'
-    : `${liveTracks.length} live · ${state.runtime.fps} fps`;
+    : `${liveTracks.length} live · ${state.runtime.fps} fps${g.throttling ? ` · ${g.effectiveHz}Hz` : ''}`;
   if (statusPill.dataset.txt !== label) {
     statusPill.dataset.txt = label;
     statusPill.innerHTML = `<span class="live-dot"></span><span>${esc(label)}</span>`;
@@ -462,6 +530,9 @@ async function flipCamera() {
     state.runtime.cameraFacing = cam.facing;
     applyMirror();
     tracker.reset();
+    palette.reset();
+    trackColors.clear();
+    governor.reset();
     countedTracks.clear();
     liveTracks = [];
     clearLabels();
@@ -618,7 +689,7 @@ function composeSnapshot() {
   g.font = '500 12px -apple-system, system-ui, sans-serif';
   g.fillStyle = 'rgba(255,255,255,0.62)';
   const line = words
-    .map((c) => { const t = translate(c, state.settings.targetLang); return t ? `${DICT[c].em} ${t.word}` : ''; })
+    .map((c) => { const t = translateItem(objId(c), state.settings.targetLang); return t ? `${t.em} ${t.word}` : ''; })
     .filter(Boolean).join('   ');
   g.fillText(line || 'Point the camera at an object to begin', 16, ch + 38);
 
@@ -663,10 +734,11 @@ function showPhotoResults(classes) {
   const lang = state.settings.targetLang;
   const body = openSheet({ title: `Found ${classes.length} object${classes.length > 1 ? 's' : ''}` });
   body.innerHTML = `<div class="group">${classes.map((cls) => {
-    const t = translate(cls, lang);
+    const t = translateItem(objId(cls), lang);
+    if (!t) return '';
     const g = genderLabel(lang, t.gender);
     return `<button class="list-row is-tappable" data-cls="${esc(cls)}">
-      <div class="list-row-icon">${esc(DICT[cls].em)}</div>
+      <div class="list-row-icon">${esc(t.em)}</div>
       <div class="list-row-body">
         <div class="list-row-title">${esc(t.word)}
           ${g ? `<span class="gender-tag" style="margin-left:6px">${esc(g)}</span>` : ''}</div>
@@ -676,7 +748,10 @@ function showPhotoResults(classes) {
     </button>`;
   }).join('')}</div>`;
   $$('[data-cls]', body).forEach((n) =>
-    n.addEventListener('click', () => { closeSheet(); setTimeout(() => openWordSheet(n.dataset.cls), 260); }));
+    n.addEventListener('click', () => {
+      closeSheet();
+      setTimeout(() => openWordSheet(objId(n.dataset.cls)), 260);
+    }));
 }
 
 /* ── Language picker ──────────────────────────────────────────────────── */
@@ -720,6 +795,7 @@ export function syncLangPill() {
 function clearLabels() {
   labelNodes.forEach((n) => n.remove());
   labelNodes.clear();
+  trackColors.clear();
 }
 
 /* ── Errors ───────────────────────────────────────────────────────────── */
@@ -782,10 +858,19 @@ export function onCameraVisible(visible) {
   if (!visible) { liveTracks = []; clearLabels(); }
 }
 
+/** True once the camera view has been wired up. */
+export function isCameraReady() { return !!stage; }
+
+/**
+ * Called whenever the target language changes — possibly from Settings or the
+ * onboarding tour, before initCamera() has run. Every step here is written to
+ * be safe on a view that has not been built yet.
+ */
 export function refreshCameraLanguage() {
   clearLabels();
   clearStrip();
   syncLangPill();
+  palette.reset();
 }
 
 export { toggleQuiz, capture, flipCamera, togglePause };

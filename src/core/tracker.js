@@ -28,6 +28,8 @@ const CLASS_LOCK_HITS = 10;  // hits after which a track resists relabelling
 const CLASS_STEAL_RATIO = 1.35; // how much better a rival class must score
 const SMOOTH_POS = 0.35;     // higher = snappier, lower = calmer
 const SMOOTH_SIZE = 0.25;
+const VEL_SMOOTH = 0.45;    // velocity EMA weight
+const MAX_PREDICT_MS = 220; // never extrapolate further than this ahead
 
 /* Classes the model routinely swaps. Only one of a group may occupy a spot. */
 const CONFUSE_GROUPS = [
@@ -208,6 +210,9 @@ export function createTracker() {
         hits: 1,
         misses: 0,
         confirmed: false,
+        vx: 0,
+        vy: 0,
+        stamp: performance.now(),
         firstSeen: performance.now()
       });
     }
@@ -241,6 +246,10 @@ export function createTracker() {
         t.hits = Math.max(1, Math.floor(t.hits * 0.5));  // re-earn some trust
       }
     }
+    const now = performance.now();
+    const prevX = t.bbox[0];
+    const prevY = t.bbox[1];
+
     t.raw = [...d.bbox];
     t.bbox = [
       lerp(t.bbox[0], d.bbox[0], SMOOTH_POS),
@@ -248,6 +257,18 @@ export function createTracker() {
       lerp(t.bbox[2], d.bbox[2], SMOOTH_SIZE),
       lerp(t.bbox[3], d.bbox[3], SMOOTH_SIZE)
     ];
+
+    // Velocity in px/ms, smoothed. Detection runs several times a second while
+    // rendering runs at display refresh, so without extrapolation a label
+    // visibly lags its object during a pan.
+    const dt = now - t.stamp;
+    if (dt > 8 && dt < 500) {
+      const vx = (t.bbox[0] - prevX) / dt;
+      const vy = (t.bbox[1] - prevY) / dt;
+      t.vx = t.vx * (1 - VEL_SMOOTH) + vx * VEL_SMOOTH;
+      t.vy = t.vy * (1 - VEL_SMOOTH) + vy * VEL_SMOOTH;
+    }
+    t.stamp = now;
     t.score = t.score * 0.7 + d.score * 0.3;
     t.hits++;
     t.misses = 0;
@@ -258,5 +279,16 @@ export function createTracker() {
     return t.misses === 0 ? 1 : Math.max(0, 1 - t.misses / MAX_MISSES);
   }
 
-  return { update, reset, fadeOf, get size() { return tracks.size; } };
+  /**
+   * Where the box is *now*, extrapolated from its last measured position.
+   * Extrapolation is capped so a track that stops being updated (occluded,
+   * or the tab was backgrounded) drifts off screen instead of freezing.
+   */
+  function predict(t, now = performance.now()) {
+    const dt = Math.min(MAX_PREDICT_MS, Math.max(0, now - t.stamp));
+    if (!dt) return t.bbox;
+    return [t.bbox[0] + t.vx * dt, t.bbox[1] + t.vy * dt, t.bbox[2], t.bbox[3]];
+  }
+
+  return { update, reset, fadeOf, predict, get size() { return tracks.size; } };
 }

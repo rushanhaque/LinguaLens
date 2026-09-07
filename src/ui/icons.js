@@ -57,7 +57,10 @@ export const icons = {
   ear: () => wrap('<path d="M7 9a5 5 0 0 1 10 0c0 2.5-2 3.5-3 5s-.5 3-2.5 3"/><path d="M9.5 18.5a2 2 0 0 1-4 0"/>'),
   refresh: () => wrap('<path d="M3.5 12a8.5 8.5 0 0 1 14.6-5.9L21 9"/><path d="M21 3.5V9h-5.5"/><path d="M20.5 12a8.5 8.5 0 0 1-14.6 5.9L3 15"/><path d="M3 20.5V15h5.5"/>'),
   grid: () => wrap('<rect x="3.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.8"/>'),
-  zoomIn: () => wrap('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4L21 21M10.5 8v5M8 10.5h5"/>')
+  zoomIn: () => wrap('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4L21 21M10.5 8v5M8 10.5h5"/>'),
+  search: () => wrap('<circle cx="10.5" cy="10.5" r="6.75"/><path d="M15.5 15.5L21 21"/>'),
+  palette: () => wrap('<path d="M12 3a9 9 0 1 0 0 18c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.5-1.1-.3-.3-.4-.6-.4-1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.7-9-7.7z"/><circle cx="7.8" cy="11.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="10.4" cy="7.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.2" cy="8.2" r="1.1" fill="currentColor" stroke="none"/>'),
+  gauge: () => wrap('<path d="M4 17.5a9 9 0 1 1 16 0"/><path d="M12 17.5l4.2-5"/><circle cx="12" cy="17.5" r="1.3" fill="currentColor" stroke="none"/>')
 };
 
 /** Render an icon by name; unknown names render nothing rather than throwing. */

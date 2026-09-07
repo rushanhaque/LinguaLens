@@ -13,39 +13,70 @@ Everything runs in the browser. No image or video ever leaves the device.
 
 ## What it does
 
-**Camera** — Live AR labels tracked across frames, with a viewfinder overlay, quiz
-mode that blurs the answer until you tap, front/rear switching, torch, zoom,
-tap-to-focus, a photo-library import for when there is nothing good to point at,
-and a branded snapshot export that shares through the native share sheet.
+**Camera** — Live AR labels tracked across frames with motion prediction, a
+viewfinder overlay, quiz mode that blurs the answer until you tap, front/rear
+switching, torch, zoom, tap-to-focus, a photo-library import for when there is
+nothing good to point at, and a branded snapshot export that shares through the
+native share sheet.
 
-**Learn** — Category decks and a review session with four question types: free
-recall with self-grading, multiple choice, listening comprehension, and typed
-spelling. Scheduling is SM-2 with three grades; answers are compared
-case-, accent- and punctuation-insensitively.
+**Colour** — LinguaLens reads the dominant colour of whatever you point at and
+names it *in agreement with the noun*: "la voiture rouge", "das rote Auto",
+"красное яблоко", "تفاحة حمراء". Adjective agreement is the grammar point
+learners get wrong longest, and it is the one thing a camera can teach directly.
+
+**Learn** — 21 decks and a review session with five question types: free recall
+with self-grading, multiple choice, listening comprehension, sentence cloze, and
+typed spelling. Search covers every word in both English and the target language.
+Scheduling is SM-2 with three grades; answers are compared case-, accent- and
+punctuation-insensitively.
 
 **Progress** — Level and XP ring, a twelve-week activity heatmap, per-category and
 per-language completion, streaks, and twenty-one achievements.
 
 **Settings** — Twelve languages, light/dark/auto theming, six accent colours,
-detection tuning (confidence, label count, detection rate, model choice), speech
-rate and voice testing, haptics and sound, daily goal, and full JSON
-export/restore of everything you have learned.
+detection tuning (confidence, label count, detection rate, model choice) with a
+live inference-latency readout, colour recognition toggles, speech rate and voice
+testing, haptics and sound, daily goal, and full JSON export/restore of
+everything you have learned.
 
 ## Languages
 
 Spanish · French · German · Italian · Portuguese · Dutch · Russian · Japanese ·
 Korean · Chinese · Hindi · Arabic
 
-All 80 recognisable object classes are translated into all twelve — 960
-translations, each with a phonetic guide or romanisation and a grammatical gender
-where the language has one. Progress is tracked separately per language.
+**201 words in every one of the twelve languages — 2,412 translations**, each with
+a phonetic guide or romanisation and a grammatical gender where the language has
+one. Progress is tracked separately per language.
 
-Articles and example sentences are **generated, not stored**: the grammar engine in
-`src/data/languages.js` derives definite, indefinite and (for German) accusative
-forms from one stored noun plus its gender, handles French and Italian elision
-(*l'orange*, *un'arancia*), and suppresses articles for plural-only nouns
-(*les ciseaux*). That is why every word gets five correct example sentences without
-a single one being written by hand.
+The vocabulary comes from three places, unified behind one namespaced id so the
+review queue, progress store and stats never have to know the difference:
+
+| Source | Count | What it is |
+| --- | --- | --- |
+| `obj:` | 80 | COCO object classes, discovered through the camera |
+| `lex:` | 110 | Core words the camera cannot point at — numbers, greetings, family, places, time, verbs, adjectives, question words |
+| `col:` | 11 | Colours, which carry adjective agreement forms |
+
+Articles, example sentences and colour phrases are **generated, not stored**. The
+grammar engine in `src/data/languages.js` derives definite, indefinite and (for
+German) accusative forms from one stored noun plus its gender, handles French and
+Italian elision (*l'orange*, *un'arancia*), and suppresses articles for
+plural-only nouns (*les ciseaux*). That is why every word gets five correct
+example sentences without a single one being written by hand.
+
+Colour phrases go further, because every language places and inflects the
+adjective differently:
+
+| Family | Rule | Example |
+| --- | --- | --- |
+| Romance | adjective follows the noun and agrees in gender | *la pomme blanche* |
+| Germanic | adjective sits between article and noun in its attributive form | *der weiße Apfel* |
+| Slavic | adjective precedes and agrees in gender | *белое яблоко* |
+| CJK | adjective precedes, via い-adjectives, 的 or the attributive form | *赤い車*, *红色的汽车* |
+| Semitic | adjective follows and agrees | *تفاحة بيضاء* |
+
+When a phrase cannot be built correctly — a plural-only noun, say — nothing is
+shown rather than something wrong.
 
 ## Running it
 
@@ -74,11 +105,17 @@ land, and a `Permissions-Policy` that grants the camera to this origin only.
 
 ## Offline
 
-The service worker caches the shell (stale-while-revalidate, so returning visits
-paint instantly and update in the background) and caches TensorFlow.js plus the
-model weights permanently, since they are versioned by URL and far too large to
-re-fetch. After one successful online load the app works with no network at all.
-When a new version is deployed, a tap-to-update toast appears.
+The service worker precaches the app shell under a versioned cache key, and caches
+TensorFlow.js plus the model weights permanently — they are versioned by URL and
+far too large to re-fetch. After one successful online load the app works with no
+network at all.
+
+App code is served **cache-first within a version** and the new worker deliberately
+does *not* call `skipWaiting()` on install. The app is a graph of ES modules: if a
+running page were allowed to pull a newly deployed module through a dynamic
+`import()`, it would fail with *"does not provide an export named …"*. Instead the
+new version waits, a tap-to-update toast appears, and the swap happens on reload —
+so every session runs against one coherent snapshot.
 
 ## Architecture
 
@@ -98,13 +135,18 @@ src/
   version.js
 
   data/
-    languages.js      Language metadata, TTS locales, grammar/sentence engine
-    dictionary.js     80 classes x 12 languages, categories, size priors
+    languages.js      Language metadata, TTS locales, grammar/sentence/colour engines
+    dictionary.js     80 camera classes x 12 languages, categories, size priors
+    lexicon.js        110 core words x 12 languages, in eight packs
+    colors.js         11 colours x 12 languages, with agreement forms
+    vocab.js          One id space over all three sources
     achievements.js   Badges, levels, XP table
 
   core/
     store.js          State, persistence, progress, streaks, XP, stats
-    tracker.js        Detection filtering and multi-object tracking
+    tracker.js        Detection filtering, multi-object tracking, motion prediction
+    palette.js        Dominant-colour extraction from a frame region
+    governor.js       Adaptive detection-rate control
     camera.js         getUserMedia lifecycle, torch, zoom, capabilities
     srs.js            SM-2 scheduling, session and distractor building
     speech.js         Voice selection and pronunciation
@@ -116,7 +158,7 @@ src/
 
   views/
     camera.js         Live AR translation
-    learn.js          Study hub and the four review modes
+    learn.js          Study hub, search, and the five review modes
     progress.js       Stats, heatmap, badges
     settings.js       Preferences and data management
     wordSheet.js      Shared word detail sheet
@@ -138,7 +180,8 @@ turns that into tracks with identities:
    same-class matches so identity survives a one-frame flicker.
 6. **Confirmation and decay** require several hits before a label appears and
    tolerate a grace period of misses before it leaves.
-7. **Per-track smoothing** interpolates position and size.
+7. **Per-track smoothing** interpolates position and size, and estimates
+   velocity so labels can be extrapolated forward between detection passes.
 
 An established track also resists relabelling: a rival class must score
 substantially better before it can take over. Two cats side by side stay two
@@ -147,6 +190,18 @@ collapsed them into one.
 
 Detection runs at a configurable rate (8 Hz by default) while rendering runs at
 display refresh, so labels move smoothly without paying for inference every frame.
+`core/governor.js` measures how long inference actually takes and spends a fixed
+share of wall-clock time on it, so a slow phone lowers its detection rate instead
+of stuttering the whole interface. Settings shows the measured latency.
+
+### How colour is read
+
+`core/palette.js` crops the middle of each tracked box — the corners are mostly
+background, and background is what makes naive colour readings wrong — downsamples
+it to 24x24, converts to HSV and takes the modal bucket. A reading is only reported
+when one bucket clearly wins and the same answer arrives on several consecutive
+frames, so a label never flickers between "red" and "orange". When nothing wins,
+nothing is shown.
 
 ## Privacy
 

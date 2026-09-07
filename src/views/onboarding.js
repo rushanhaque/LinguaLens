@@ -15,12 +15,23 @@ const SLIDES = [
   {
     em: '🔍',
     title: 'Point. Learn. Remember.',
-    body: 'Aim your camera at anything around you. LinguaLens names it in the language you are learning, with pronunciation and grammar.'
+    body: 'Aim your camera at anything around you. LinguaLens names it in the language you are learning, with pronunciation, gender and colour.'
+  },
+  {
+    em: '🎨',
+    title: 'It teaches the hard part',
+    body: 'Adjectives that agree, articles that change, sentences you can actually say. Point at a red car and you get “la voiture rouge”, not a word list.'
   },
   {
     em: '🔒',
     title: 'Everything stays on your device',
-    body: 'Object recognition runs locally in your browser. No photo or video is ever uploaded, and your progress is stored only here.'
+    body: 'Recognition runs locally in your browser. No photo or video is ever uploaded, and your progress is stored only here.'
+  },
+  {
+    em: '📷',
+    title: 'Your browser will ask for the camera',
+    body: 'That prompt is your browser, not us. Choosing Allow is what lets LinguaLens see what you point at — and you can still study every word without it.',
+    primer: true
   },
   {
     em: '🌍',
@@ -72,7 +83,7 @@ function render() {
       <div class="ob-dots">${SLIDES.map((_, i) =>
         `<i class="${i === index ? 'on' : ''}"></i>`).join('')}</div>
       <button class="btn btn-primary btn-lg" id="ob-next">
-        ${last ? 'Start learning' : 'Continue'}
+        ${last ? 'Start learning' : slide.primer ? 'Got it' : 'Continue'}
       </button>
       ${last ? '' : '<button class="btn-plain btn-sm" id="ob-skip">Skip</button>'}
     </div>`;

@@ -8,7 +8,7 @@
  *     they are versioned by URL and are far too large to re-fetch casually.
  */
 
-const VERSION = 'v2.0.0';
+const VERSION = 'v2.1.0';
 const SHELL_CACHE = `lingualens-shell-${VERSION}`;
 const VENDOR_CACHE = 'lingualens-vendor';   // survives shell upgrades on purpose
 const MODEL_CACHE = 'lingualens-model';
@@ -26,9 +26,14 @@ const SHELL = [
   './src/version.js',
   './src/data/languages.js',
   './src/data/dictionary.js',
+  './src/data/lexicon.js',
+  './src/data/colors.js',
+  './src/data/vocab.js',
   './src/data/achievements.js',
   './src/core/store.js',
   './src/core/tracker.js',
+  './src/core/palette.js',
+  './src/core/governor.js',
   './src/core/camera.js',
   './src/core/speech.js',
   './src/core/srs.js',
@@ -57,7 +62,11 @@ self.addEventListener('install', (event) => {
     // addAll fails the whole install if any single file 404s; add individually.
     await Promise.all(SHELL.map((url) =>
       cache.add(new Request(url, { cache: 'reload' })).catch(() => {})));
-    self.skipWaiting();
+    // Deliberately NOT skipWaiting() here. The app is a graph of ES modules,
+    // and a page that is already running must keep loading modules from the
+    // snapshot it started with — a dynamic import() served from a newer cache
+    // mid-session fails with "does not provide an export named …". The new
+    // worker takes over only when the user accepts the update, which reloads.
   })());
 });
 
@@ -72,6 +81,8 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('message', (event) => {
+  // Sent by the page when the user taps the "new version ready" toast, which
+  // reloads immediately afterwards — the only safe moment to swap snapshots.
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
@@ -102,7 +113,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(staleWhileRevalidate(req, SHELL_CACHE));
+  // App code is cache-first within a version so every module in a session comes
+  // from the same snapshot. Everything else may revalidate in the background.
+  const isAppCode = /\.(js|css)$/.test(url.pathname);
+  event.respondWith(isAppCode
+    ? cacheFirst(req, SHELL_CACHE)
+    : staleWhileRevalidate(req, SHELL_CACHE));
 });
 
 async function cacheFirst(req, cacheName) {

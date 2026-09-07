@@ -3,7 +3,7 @@
  */
 
 import { ACHIEVEMENTS } from '../data/achievements.js';
-import { CATEGORIES, ALL_CLASSES, DICT } from '../data/dictionary.js';
+import { GROUPS, GROUP_KEYS, idsInGroup, SOURCE_OBJ, TOTAL_OBJECTS } from '../data/vocab.js';
 import { LANGUAGES } from '../data/languages.js';
 import { state, getStats, languageBreakdown, langProgress, todayKey } from '../core/store.js';
 import { masteryLevel } from '../core/srs.js';
@@ -32,7 +32,7 @@ export function renderProgress() {
       ${levelCard(lvl, s)}
 
       <section class="stat-grid">
-        ${tile('Discovered', `${s.discovered}`, `of ${s.total} objects`)}
+        ${tile('Words started', `${s.discovered}`, `of ${s.total} · ${s.objectsFound}/${TOTAL_OBJECTS} found by camera`)}
         ${tile('Mastered', `${s.mastered}`, 'long-term memory')}
         ${tile('Reviews', `${s.reviews}`, s.reviews ? `${Math.round(s.accuracy * 100)}% accurate` : 'none yet')}
         ${tile('Streak', `${s.streak}`, `best ${s.bestStreak} day${s.bestStreak === 1 ? '' : 's'}`)}
@@ -53,8 +53,13 @@ export function renderProgress() {
       </section>
 
       <section>
-        <div class="section-label">Categories · ${esc(LANGUAGES[s.lang].name)}</div>
-        <div class="group">${categoryRows(words)}</div>
+        <div class="section-label">Camera categories · ${esc(LANGUAGES[s.lang].name)}</div>
+        <div class="group">${groupRows(words, (g) => g.source === SOURCE_OBJ)}</div>
+      </section>
+
+      <section>
+        <div class="section-label">Core vocabulary packs</div>
+        <div class="group">${groupRows(words, (g) => g.source !== SOURCE_OBJ)}</div>
       </section>
 
       <section>
@@ -125,20 +130,21 @@ function heatmap() {
   return cells.join('');
 }
 
-function categoryRows(words) {
-  return Object.entries(CATEGORIES).map(([key, cat]) => {
-    const all = ALL_CLASSES.filter((c) => DICT[c].cat === key);
-    const have = all.filter((c) => words[c]).length;
-    const mastered = all.filter((c) => words[c] && masteryLevel(words[c]) >= 4).length;
-    const pct = all.length ? have / all.length : 0;
+function groupRows(words, predicate) {
+  return GROUP_KEYS.filter((key) => predicate(GROUPS[key])).map((key) => {
+    const g = GROUPS[key];
+    const ids = idsInGroup(key);
+    const have = ids.filter((id) => words[id]).length;
+    const mastered = ids.filter((id) => words[id] && masteryLevel(words[id]) >= 4).length;
+    const pct = ids.length ? have / ids.length : 0;
     return `
       <div class="lang-progress-row">
-        <span class="flag">${cat.em}</span>
+        <span class="flag">${g.em}</span>
         <div class="body">
-          <div class="n">${esc(cat.label)}</div>
-          <div class="bar"><div class="bar-fill" style="width:${pct * 100}%;background:${cat.color}"></div></div>
+          <div class="n">${esc(g.label)}</div>
+          <div class="bar"><div class="bar-fill" style="width:${pct * 100}%;background:${g.color}"></div></div>
         </div>
-        <div class="pct">${have}/${all.length}${mastered ? ` · ★${mastered}` : ''}</div>
+        <div class="pct">${have}/${ids.length}${mastered ? ` · ★${mastered}` : ''}</div>
       </div>`;
   }).join('');
 }

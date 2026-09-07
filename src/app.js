@@ -158,7 +158,10 @@ function wireCelebrations() {
 
   on('navigate', (e) => go(e.detail.tab));
   on('theme', applyTheme);
-  on('tour', () => showOnboarding());
+  on('tour', () => {
+    initOnboarding($('#onboarding'), () => { refreshCameraLanguage(); refreshLearn(); });
+    showOnboarding();
+  });
 
   on('settings', (e) => {
     if (e.detail.key === 'targetLang') {
@@ -243,10 +246,6 @@ async function boot() {
   initLearn($('#view-learn'));
   initProgress($('#view-progress'));
   initSettings($('#view-settings'));
-  initOnboarding($('#onboarding'), () => {
-    refreshCameraLanguage();
-    refreshLearn();
-  });
 
   paintCameraChrome();
   updateDueBadge();
@@ -258,16 +257,33 @@ async function boot() {
     go(hash);
   }
 
-  await initCamera(setProgress);
+  const firstRun = !state.settings.onboarded;
+
+  // On a first run the tour comes first, so the slide explaining the camera
+  // prompt is on screen *before* the browser shows it. Asking cold is the
+  // single biggest reason people deny camera access and never come back.
+  if (firstRun) {
+    setProgress(100, 'Ready');
+    setTimeout(() => $('#launch').classList.add('is-done'), 300);
+    await new Promise((resolve) => {
+      initOnboarding($('#onboarding'), resolve);
+      showOnboarding();
+    });
+    refreshCameraLanguage();
+    refreshLearn();
+    await initCamera(setProgress);
+  } else {
+    initOnboarding($('#onboarding'), () => {
+      refreshCameraLanguage();
+      refreshLearn();
+    });
+    await initCamera(setProgress);
+    // Give the launch screen a beat at 100% rather than snapping away.
+    setTimeout(() => $('#launch').classList.add('is-done'), 420);
+  }
 
   refreshBadges();
   paintCameraChrome();
-
-  // Give the launch screen a beat at 100% rather than snapping away.
-  setTimeout(() => {
-    $('#launch').classList.add('is-done');
-    if (!state.settings.onboarded) showOnboarding();
-  }, 420);
 }
 
 /* Persist immediately when the page is being put away — 'visibilitychange'

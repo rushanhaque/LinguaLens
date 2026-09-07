@@ -103,9 +103,30 @@ export function renderSettings() {
             ])}</div>
           </div>
           ${row('Confidence badge', 'Show model certainty on labels', toggle('showConfidence'))}
+          <div class="list-row">
+            <div class="list-row-icon">${icon('gauge')}</div>
+            <div class="list-row-body">
+              <div class="list-row-title">Performance</div>
+              <div class="list-row-sub" id="perf-line">measuring…</div>
+            </div>
+          </div>
         </div>
         <p class="footnote" style="padding:var(--s-2) var(--s-1) 0">
-          Changing the model takes effect after a reload.
+          Changing the model takes effect after a reload. LinguaLens measures how
+          long each pass takes and lowers the rate automatically on slower devices.
+        </p>
+      </section>
+
+      <section>
+        <div class="section-label">Colour</div>
+        <div class="group">
+          ${row('Read object colours', 'Name the dominant colour of what you point at', toggle('showColors'))}
+          ${row('Agreeing colour phrases', 'Show “la voiture rouge”, not just “rouge”', toggle('colorPhrases'))}
+        </div>
+        <p class="footnote" style="padding:var(--s-2) var(--s-1) 0">
+          Colour adjectives agree with the noun's gender in most of these languages —
+          this is the fastest way to internalise that. A phrase is only shown when it
+          can be built correctly.
         </p>
       </section>
 
@@ -287,6 +308,8 @@ function wire() {
     cue('tap', 'select');
   }));
 
+  paintPerf();
+
   $('#pick-lang')?.addEventListener('click', () =>
     import('./camera.js').then((m) => m.openLanguagePicker()));
 
@@ -330,6 +353,20 @@ function wire() {
       location.reload();
     }
   });
+}
+
+/** Live inference timing, so "it feels slow" has a number behind it. */
+function paintPerf() {
+  const line = $('#perf-line', root);
+  if (!line) return;
+  const g = state.runtime.detectStats;
+  if (!g || !g.samples) {
+    line.textContent = state.runtime.ready ? 'measuring…' : 'camera not running';
+    return;
+  }
+  line.textContent = g.throttling
+    ? `${g.latency} ms per pass · limited to ${g.effectiveHz} Hz by this device`
+    : `${g.latency} ms per pass · running at ${g.effectiveHz} Hz`;
 }
 
 const SAMPLES = {
