@@ -114,6 +114,8 @@ export function renderSettings() {
               { id: 'lite_mobilenet_v2', label: 'Fast' }
             ])}</div>
           </div>
+          ${row('Extended recognition',
+            'Name the centred subject using the 1000-class classifier', toggle('focusMode'))}
           ${row('Confidence badge', 'Show model certainty on labels', toggle('showConfidence'))}
           <div class="list-row">
             <div class="list-row-icon">${icon('gauge')}</div>
@@ -126,6 +128,9 @@ export function renderSettings() {
         <p class="footnote" style="padding:var(--s-2) var(--s-1) 0">
           Changing the model takes effect after a reload. Lemma measures how
           long each pass takes and lowers the rate automatically on slower devices.
+          Extended recognition adds a second model that names hundreds of everyday
+          objects the box detector has no word for — pens, staplers, globes — and
+          pauses itself whenever the device is already at its limit.
         </p>
       </section>
 

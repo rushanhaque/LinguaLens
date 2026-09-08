@@ -28,6 +28,7 @@ const defaultSettings = () => ({
   maxDetections: 6,           // labels drawn at once
   detectHz: 8,                // detection passes per second (render stays 60)
   modelBase: 'auto',          // 'auto' | 'mobilenet_v2' | 'lite_mobilenet_v2'
+  focusMode: true,            // name the centred subject via the classifier
   showPhonetics: true,
   showGender: true,
   showConfidence: false,

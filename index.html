@@ -35,6 +35,10 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <!-- Whole-frame classifier: adds ImageNet's 1000 classes on top of COCO's 80,
+       which is what lets the app name a pen, a stapler or a globe. Loaded after
+       the app is already running, so it never delays the first frame. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
 </head>
 
 <body>
@@ -69,6 +73,7 @@
           </div>
 
           <div id="cam-bottom">
+            <button class="focus-chip" id="focus-chip" type="button" aria-live="polite"></button>
             <div id="detected-strip" aria-live="polite" aria-label="Objects currently detected"></div>
             <div id="shutter-row">
               <button class="icon-btn icon-btn-lg" id="btn-import" aria-label="Analyse a photo from your library"></button>

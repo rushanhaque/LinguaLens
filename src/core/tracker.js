@@ -19,17 +19,31 @@
 import { DICT, SIZE_RANGES } from '../data/dictionary.js';
 
 /* ── Tuning ───────────────────────────────────────────────────────────── */
-const CONFIRM_HITS = 4;      // frames before a track is shown
-const MAX_MISSES = 12;       // frames a lost track survives (grace period)
+const CONFIRM_HITS = 3;      // detection passes before a track is shown
+
+/* Staleness is governed by three independent limits, and whichever trips first
+   wins. Counting passes alone was the bug behind labels that outlived their
+   object: at 4 Hz a twelve-pass grace period kept a label on screen for three
+   seconds after the camera had moved on. Wall-clock is what a person actually
+   perceives, so MAX_AGE_MS is the real guarantee and the pass counts merely
+   catch the common case sooner. */
+const MAX_MISSES = 3;        // passes a lost track survives before deletion
+const SHOW_MISSES = 1;       // passes it keeps being drawn (always < MAX_MISSES)
+const MAX_AGE_MS = 500;      // hard ceiling on time since the last real measurement
+
 const NMS_IOU = 0.45;
 const CONFUSE_IOU = 0.30;
-const MATCH_IOU = 0.28;      // detection↔track association floor
-const CLASS_LOCK_HITS = 10;  // hits after which a track resists relabelling
-const CLASS_STEAL_RATIO = 1.35; // how much better a rival class must score
-const SMOOTH_POS = 0.35;     // higher = snappier, lower = calmer
-const SMOOTH_SIZE = 0.25;
+const MATCH_IOU = 0.28;      // same-class detection↔track association floor
+/* A detection of a *different* class needs far more overlap to capture an
+   existing track. Without this a "laptop" track would happily absorb whatever
+   box next appeared in the same corner of the frame and keep its old label. */
+const MATCH_IOU_CROSS = 0.55;
+const CLASS_LOCK_HITS = 14;  // hits after which a track resists relabelling
+const CLASS_STEAL_RATIO = 1.25; // how much better a rival class must score
+const SMOOTH_POS = 0.40;     // higher = snappier, lower = calmer
+const SMOOTH_SIZE = 0.28;
 const VEL_SMOOTH = 0.45;    // velocity EMA weight
-const MAX_PREDICT_MS = 220; // never extrapolate further than this ahead
+const MAX_PREDICT_MS = 180; // never extrapolate further than this ahead
 
 /* Classes the model routinely swaps. Only one of a group may occupy a spot. */
 const CONFUSE_GROUPS = [
@@ -181,8 +195,9 @@ export function createTracker() {
     for (const d of resolved) {
       for (const [id, t] of tracks) {
         const ov = iou(d.bbox, t.bbox);
-        if (ov < MATCH_IOU) continue;
-        pairs.push({ d, id, ov, same: t.cls === d.cls });
+        const same = t.cls === d.cls;
+        if (ov < (same ? MATCH_IOU : MATCH_IOU_CROSS)) continue;
+        pairs.push({ d, id, ov, same });
       }
     }
     pairs.sort((a, b) => (b.same - a.same) || (b.ov - a.ov));
@@ -217,21 +232,40 @@ export function createTracker() {
       });
     }
 
-    /* 6. Decay everything we did not see this frame. */
+    /* 6. Decay everything we did not see this pass. */
     for (const id of unmatched) {
       const t = tracks.get(id);
       t.misses++;
       if (t.misses > MAX_MISSES) tracks.delete(id);
     }
 
-    /* 7. Emit confirmed tracks. */
+    /* 7. Expire on wall-clock, then emit what is still worth drawing.
+       A track past SHOW_MISSES stops being emitted while it is still alive, so
+       it can recover its identity if the object comes back within the grace
+       period without ever having flickered a stale label on screen. */
+    const now = performance.now();
     const out = [];
-    for (const t of tracks.values()) {
+    for (const [id, t] of tracks) {
+      if (now - t.stamp > MAX_AGE_MS) { tracks.delete(id); continue; }
       if (t.hits >= CONFIRM_HITS) t.confirmed = true;
-      if (t.confirmed) out.push(t);
+      if (!t.confirmed || t.misses > SHOW_MISSES) continue;
+      out.push(t);
     }
     out.sort((a, b) => b.score - a.score);
     return out.slice(0, maxOut);
+  }
+
+  /**
+   * Age every track by one pass without feeding it a detection. The camera
+   * view calls this when the frame changes a lot, so tracks that belong to a
+   * scene we have panned away from die immediately rather than coasting
+   * through their grace period on stale measurements.
+   */
+  function decay(passes = 1) {
+    for (const [id, t] of tracks) {
+      t.misses += passes;
+      if (t.misses > MAX_MISSES) tracks.delete(id);
+    }
   }
 
   /** Fold a detection into an existing track, with class-stability guarding. */
@@ -274,9 +308,16 @@ export function createTracker() {
     t.misses = 0;
   }
 
-  /** Opacity for a fading track — 1 while live, easing out through the grace period. */
-  function fadeOf(t) {
-    return t.misses === 0 ? 1 : Math.max(0, 1 - t.misses / MAX_MISSES);
+  /**
+   * Opacity for a fading track. Live tracks are fully opaque; a missed one
+   * drops away steeply (squared falloff) and is additionally faded by how long
+   * it has gone unmeasured, so a label never lingers at readable opacity over
+   * something the camera is no longer looking at.
+   */
+  function fadeOf(t, now = performance.now()) {
+    const byMiss = t.misses === 0 ? 1 : Math.max(0, 1 - t.misses / (SHOW_MISSES + 1)) ** 2;
+    const byAge = Math.max(0, 1 - (now - t.stamp) / MAX_AGE_MS);
+    return Math.min(byMiss, byAge);
   }
 
   /**
@@ -290,5 +331,5 @@ export function createTracker() {
     return [t.bbox[0] + t.vx * dt, t.bbox[1] + t.vy * dt, t.bbox[2], t.bbox[3]];
   }
 
-  return { update, reset, fadeOf, predict, get size() { return tracks.size; } };
+  return { update, reset, decay, fadeOf, predict, get size() { return tracks.size; } };
 }

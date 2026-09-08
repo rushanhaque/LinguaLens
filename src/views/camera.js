@@ -15,17 +15,21 @@ import { createTracker } from '../core/tracker.js';
 import { createPalette } from '../core/palette.js';
 import { createGovernor } from '../core/governor.js';
 import { createCamera, CameraError } from '../core/camera.js';
+import { createClassifier } from '../core/classifier.js';
+import { createSceneWatch, SCENE_CUT, SCENE_PAN } from '../core/scene.js';
 import { speak } from '../core/speech.js';
 import { cue, haptic, unlockAudio } from '../core/feedback.js';
 import { $, $$, el, esc, toast, openSheet, closeSheet, clamp } from '../ui/kit.js';
 import { icon } from '../ui/icons.js';
 import { openWordSheet } from './wordSheet.js';
 
-let video, canvas, ctx, labelLayer, stage, statusPill, strip;
+let video, canvas, ctx, labelLayer, stage, statusPill, strip, focusChip;
 let cam = null;
 let tracker = createTracker();
 const palette = createPalette();
 const governor = createGovernor();
+const classifier = createClassifier();
+const scene = createSceneWatch();
 /** trackId → colour key most recently read off that object. */
 const trackColors = new Map();
 let model = null;
@@ -38,6 +42,10 @@ let stripCards = new Map();     // class → element
 let cssZoom = 1;
 let paused = false;
 
+/* The classifier's current answer — what the camera is centred on. It runs on
+   its own cadence, managed inside the classifier itself. */
+let focusResult = null;
+
 /* ── Boot ─────────────────────────────────────────────────────────────── */
 
 export async function initCamera(setProgress) {
@@ -48,6 +56,7 @@ export async function initCamera(setProgress) {
   stage = $('#stage');
   statusPill = $('#status-pill');
   strip = $('#detected-strip');
+  focusChip = $('#focus-chip');
 
   wireControls();
 
@@ -76,12 +85,27 @@ export async function initCamera(setProgress) {
 
   resize();
   window.addEventListener('resize', resize);
-  new ResizeObserver(resize).observe(stage);
+  const ro = new ResizeObserver(resize);
+  ro.observe(stage);
+  // The control deck grows when the focus chip appears, and label placement
+  // reserves its height — so its size has to invalidate the cached guard too.
+  const deck = $('#cam-bottom');
+  if (deck) ro.observe(deck);
 
   running = true;
   state.runtime.ready = true;
   requestAnimationFrame(loop);
   setProgress(100, 'Ready');
+
+  /* The classifier is the larger of the two models and only widens the
+     vocabulary — it is not needed for the app to work. Loading it after the
+     first frames are already on screen keeps startup fast, and detection
+     simply gets better a few seconds in. */
+  classifier.load().then((ok) => {
+    state.runtime.classifierReady = ok;
+    if (ok) toast('Extended recognition ready', { emoji: '🔎', duration: 2200 });
+  });
+
   return true;
 }
 
@@ -142,7 +166,7 @@ function loop(now) {
   }
 
   render();
-  updateStatus();
+  updateStatus(now);
 }
 
 let detecting = false;
@@ -152,6 +176,22 @@ async function detect() {
   detecting = true;
   const t0 = performance.now();
   try {
+    /* How much has the picture changed since the last pass? A big jump means
+       the camera has been moved somewhere else, and every existing track
+       describes a scene that is no longer in front of the lens. Ageing them
+       here is what stops a label outliving its object during a pan — the
+       tracker on its own cannot tell "moved away" from "briefly hidden". */
+    const motion = scene.sample(video);
+    if (motion > SCENE_CUT) {
+      tracker.reset();
+      classifier.reset();
+      liveTracks = [];
+      focusResult = null;
+      countedTracks.clear();
+    } else if (motion > SCENE_PAN) {
+      tracker.decay(2);
+    }
+
     const raw = await model.detect(video, 20, 0.25);
     governor.sample(performance.now() - t0);
 
@@ -164,6 +204,17 @@ async function detect() {
     readColors(liveTracks);
     handleDiscoveries(liveTracks);
     syncStrip(liveTracks);
+
+    /* The classifier names whatever the camera is centred on, including the
+       hundreds of everyday objects COCO has no label for. It paces itself
+       against its own measured cost, so calling it on every pass is safe —
+       it returns the held result and declines to run when it is too soon. */
+    if (state.settings.focusMode && classifier.ready) {
+      focusResult = await classifier.classify(video);
+      if (focusResult) noteFocusDiscovery(focusResult.key);
+    } else {
+      focusResult = null;
+    }
   } catch { /* a dropped frame is not worth reporting */ }
   detecting = false;
 }
@@ -213,10 +264,31 @@ function handleDiscoveries(tracks) {
   }
 }
 
+/* The classifier reports the same word on every pass while the camera is held
+   still, so a sighting is counted only when the answer actually changes. */
+let lastFocusKey = null;
+
+function noteFocusDiscovery(cls) {
+  if (cls === lastFocusKey) return;
+  lastFocusKey = cls;
+  if (!DICT[cls]) return;
+  const isNew = recordSighting(cls);
+  if (!isNew) return;
+  const tr = translateItem(objId(cls), state.settings.targetLang);
+  if (!tr) return;
+  cue('discover', 'success');
+  toast(`${tr.word} — new word!`, { emoji: tr.em });
+  if (state.settings.speakOnDiscover) {
+    speak(citationForm(state.settings.targetLang, tr.word, tr.gender));
+  }
+  refreshBadges();
+}
+
 /* ── Rendering ────────────────────────────────────────────────────────── */
 
 function resize() {
   if (!stage) return;
+  bottomGuardPx = 0;                       // re-measure the control deck once
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const w = stage.clientWidth;
   const h = stage.clientHeight;
@@ -285,6 +357,49 @@ function render() {
       setTimeout(() => { node.remove(); labelNodes.delete(id); }, 200);
     }
   }
+
+  renderFocusChip();
+}
+
+/**
+ * The classifier's answer, shown as a chip under the frame.
+ *
+ * It is suppressed when a tracked box already carries the same word, so the
+ * user never sees the same thing named twice in two different places.
+ */
+function renderFocusChip() {
+  if (!focusChip) return;
+  const r = focusResult;
+  const dup = r && liveTracks.some((t) => t.cls === r.key);
+
+  if (!r || dup || !state.settings.focusMode) {
+    if (focusChip.dataset.on === '1') {
+      focusChip.dataset.on = '0';
+      focusChip.classList.remove('is-shown');
+    }
+    return;
+  }
+
+  const tr = translateItem(objId(r.key), state.settings.targetLang);
+  if (!tr) return;
+
+  const sig = `${r.key}|${state.settings.targetLang}|${state.settings.showPhonetics}`;
+  if (focusChip.dataset.sig !== sig) {
+    focusChip.dataset.sig = sig;
+    focusChip.dataset.cls = r.key;
+    const rtl = LANGUAGES[state.settings.targetLang].rtl;
+    focusChip.innerHTML =
+      `<span class="em">${esc(tr.em)}</span>` +
+      `<span class="body">` +
+        `<span class="w" ${rtl ? 'dir="rtl"' : ''}>${esc(tr.word)}</span>` +
+        (state.settings.showPhonetics && tr.phonetic
+          ? `<span class="ph">${esc(tr.phonetic)}</span>` : '') +
+        `<span class="e">${esc(r.key)}</span>` +
+      `</span>`;
+    focusChip.setAttribute('aria-label', `${tr.word}, ${r.key}. Tap for details.`);
+  }
+  focusChip.dataset.on = '1';
+  focusChip.classList.add('is-shown');
 }
 
 /**
@@ -379,20 +494,38 @@ function positionLabel(t, p, fade) {
   if (!state.settings.quizMode) node.classList.remove('is-revealed');
   node.style.opacity = fade;
 
-  // Prefer above the box; drop below when the top edge is too close to chrome.
-  const lw = node.offsetWidth || 130;
-  const lh = node.offsetHeight || 62;
+  /* Label size is measured only when its content changed. Reading offsetWidth
+     forces the browser to flush layout, and doing that once per label per
+     animation frame was the single largest source of jank in the overlay —
+     the numbers cannot change unless the markup did, so cache them. */
+  if (node.dataset.mw === undefined || node.dataset.msig !== node.dataset.sig) {
+    node.dataset.msig = node.dataset.sig;
+    node.dataset.mw = node.offsetWidth || 130;
+    node.dataset.mh = node.offsetHeight || 62;
+  }
+  const lw = +node.dataset.mw;
+  const lh = +node.dataset.mh;
+
   // Reserve the bands occupied by the top chrome and the bottom control deck
   // so a label never hides behind them.
   const topGuard = 96;
-  const bottomGuard = ($('#cam-bottom')?.offsetHeight || 120) + 12;
-  const maxY = Math.max(topGuard, p.ch - bottomGuard - lh);
-  let lx = clamp(p.x, 8, Math.max(8, p.cw - lw - 8));
+  const maxY = Math.max(topGuard, p.ch - bottomGuard() - lh);
+  const lx = clamp(p.x, 8, Math.max(8, p.cw - lw - 8));
   let ly = p.y - lh - 8;
   if (ly < topGuard) ly = p.y + p.h + 8;
   ly = clamp(ly, topGuard, maxY);
 
   node.style.transform = `translate3d(${Math.round(lx)}px, ${Math.round(ly)}px, 0)`;
+}
+
+/* Height of the bottom control deck, measured once per layout rather than
+   once per label per frame. Invalidated by resize(). */
+let bottomGuardPx = 0;
+function bottomGuard() {
+  if (!bottomGuardPx) {
+    bottomGuardPx = (document.getElementById('cam-bottom')?.offsetHeight || 120) + 12;
+  }
+  return bottomGuardPx;
 }
 
 function labelMarkup(t, tr, colorKey) {
@@ -493,16 +626,23 @@ function clearStrip() {
 
 /* ── Status pill ──────────────────────────────────────────────────────── */
 
-function updateStatus() {
+/* The pill shows counters that change a few times a second at most, so
+   rebuilding it at display refresh was pure waste. */
+let lastStatusAt = 0;
+
+function updateStatus(now = performance.now()) {
   if (!statusPill) return;
+  if (now - lastStatusAt < 250) return;
+  lastStatusAt = now;
   statusPill.classList.toggle('is-paused', paused);
   const g = governor.stats(clamp(state.settings.detectHz, 2, 20));
   state.runtime.detectStats = g;
   // Surfacing the throttle is honest: the user can see the device is the limit
   // rather than assuming detection is broken.
+  const count = liveTracks.length + (focusResult && !liveTracks.some((t) => t.cls === focusResult.key) ? 1 : 0);
   const label = paused
     ? 'Paused'
-    : `${liveTracks.length} live · ${state.runtime.fps} fps${g.throttling ? ` · ${g.effectiveHz}Hz` : ''}`;
+    : `${count} live · ${state.runtime.fps} fps${g.throttling ? ` · ${g.effectiveHz}Hz` : ''}`;
   if (statusPill.dataset.txt !== label) {
     statusPill.dataset.txt = label;
     statusPill.innerHTML = `<span class="live-dot"></span><span>${esc(label)}</span>`;
@@ -522,6 +662,14 @@ function wireControls() {
   $('#photo-input')?.addEventListener('change', onPhotoPicked);
   $('#btn-lang')?.addEventListener('click', openLanguagePicker);
   $('#btn-help')?.addEventListener('click', openTips);
+
+  focusChip?.addEventListener('click', () => {
+    const cls = focusChip.dataset.cls;
+    if (!cls) return;
+    haptic('light');
+    unlockAudio();
+    openWordSheet(objId(cls));
+  });
 
   stage?.addEventListener('click', onStageTap);
 }
@@ -553,8 +701,12 @@ async function flipCamera() {
     palette.reset();
     trackColors.clear();
     governor.reset();
+    classifier.reset();
+    scene.reset();
     countedTracks.clear();
+    lastFocusKey = null;
     liveTracks = [];
+    focusResult = null;
     clearLabels();
     syncTorchButton();
     toast(cam.isFront ? 'Front camera' : 'Rear camera', { emoji: '🔄' });
@@ -739,6 +891,15 @@ async function onPhotoPicked(e) {
     const found = [...new Set(
       raw.filter((p) => DICT[p.class] && p.score >= state.settings.confidence).map((p) => p.class)
     )];
+
+    // Give the photo the same extended vocabulary the live view gets, so a
+    // picture of a pen or a stapler is not reported as "nothing recognisable".
+    if (classifier.ready) {
+      try {
+        const preds = await classifier.classifyStill(c);
+        for (const key of preds) if (!found.includes(key)) found.push(key);
+      } catch { /* the box detections still stand */ }
+    }
     bitmap.close?.();
 
     if (!found.length) { toast('Nothing recognisable in that photo'); return; }
@@ -875,7 +1036,16 @@ function hideError() {
 export function onCameraVisible(visible) {
   // Detection is expensive; idle it whenever the camera is off screen.
   state.runtime.detecting = visible && !paused;
-  if (!visible) { liveTracks = []; clearLabels(); }
+  if (!visible) {
+    liveTracks = [];
+    focusResult = null;
+    clearLabels();
+    // The scene will have changed by the time we come back, and stale
+    // trackers would spend their grace period describing the old one.
+    tracker.reset();
+    classifier.reset();
+    scene.reset();
+  }
 }
 
 /** True once the camera view has been wired up. */
@@ -917,6 +1087,7 @@ export function paintCameraChrome() {
 
 const TIPS = [
   ['🎯', 'Fill the frame', 'Get close enough that the object takes up a good part of the view — small, distant things are hard to recognise.'],
+  ['🔎', 'Centre what you want named', 'Boxes appear around the things Lemma can locate. Anything else — a pen, a stapler, a globe — is named by pointing the middle of the frame straight at it.'],
   ['💡', 'Give it light', 'Detection accuracy drops sharply in dim rooms. Use the torch button if your device has one.'],
   ['🐢', 'Hold steady', 'A label appears only after the same object is seen for several frames, which keeps the overlay calm.'],
   ['👆', 'Tap a label', 'Open the full word card: gender, phonetics, example sentences, and the same word in every other language.'],

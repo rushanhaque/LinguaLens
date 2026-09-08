@@ -8,7 +8,7 @@
  *     they are versioned by URL and are far too large to re-fetch casually.
  */
 
-const VERSION = 'v3.0.1';
+const VERSION = 'v3.1.0';
 const SHELL_CACHE = `lemma-shell-${VERSION}`;
 const VENDOR_CACHE = 'lemma-vendor';   // survives shell upgrades on purpose
 const MODEL_CACHE = 'lemma-model';
@@ -26,6 +26,8 @@ const SHELL = [
   './src/version.js',
   './src/data/languages.js',
   './src/data/dictionary.js',
+  './src/data/extras.js',
+  './src/data/imagenet.js',
   './src/data/lexicon.js',
   './src/data/colors.js',
   './src/data/vocab.js',
@@ -34,6 +36,8 @@ const SHELL = [
   './src/core/tracker.js',
   './src/core/palette.js',
   './src/core/governor.js',
+  './src/core/classifier.js',
+  './src/core/scene.js',
   './src/core/camera.js',
   './src/core/speech.js',
   './src/core/srs.js',

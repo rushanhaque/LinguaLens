@@ -1,2 +1,2 @@
-export const APP_VERSION = '3.0.1';
-export const BUILD = 'lemma-2025';
+export const APP_VERSION = '3.1.0';
+export const BUILD = 'lemma-wide-vocab';

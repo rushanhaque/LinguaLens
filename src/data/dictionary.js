@@ -12,6 +12,8 @@
  *               p plural-only (article suppressed) · '' none
  */
 
+import { EXTRA_DICT, EXTRA_CATEGORIES } from './extras.js';
+
 export const CATEGORIES = {
   people: { label: 'People', em: '🧑', color: '#B57C46' },
   transport: { label: 'Transport', em: '🚗', color: '#4F6D91' },
@@ -24,10 +26,13 @@ export const CATEGORIES = {
   furniture: { label: 'Furniture', em: '🛋️', color: '#8A6A52' },
   electronics: { label: 'Electronics', em: '💻', color: '#5A6180' },
   appliance: { label: 'Appliances', em: '🔌', color: '#6B6659' },
-  object: { label: 'Objects', em: '📦', color: '#9A7B5C' }
+  object: { label: 'Objects', em: '📦', color: '#9A7B5C' },
+  ...EXTRA_CATEGORIES
 };
 
-export const DICT = {
+/* The COCO-SSD classes. Everything the bounding-box detector can name lives
+   here; extras.js adds the far larger set the image classifier reaches. */
+const COCO_DICT = {
   person: {
     em: '🧑', cat: 'people', lvl: 1, size: 'large',
     t: {
@@ -909,6 +914,16 @@ export const DICT = {
     }
   }
 };
+
+/**
+ * The full vocabulary. COCO first so its entries win any key collision — those
+ * are the ones the box detector emits by name, and they must keep the exact
+ * size and aspect metadata the tracker's gates are tuned against.
+ */
+export const DICT = { ...EXTRA_DICT, ...COCO_DICT };
+
+/** Just the classes COCO-SSD itself can emit, for the detector's own gating. */
+export const COCO_CLASSES = Object.keys(COCO_DICT);
 
 /** Expected on-screen area as a fraction of the frame, per size class. */
 export const SIZE_RANGES = {
