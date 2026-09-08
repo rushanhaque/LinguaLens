@@ -304,4 +304,9 @@ window.Lemma = {
   get language() { return LANGUAGES[state.settings.targetLang]; }
 };
 
-boot();
+boot().catch((err) => {
+  console.error('[Lemma] boot failed:', err);
+  // Always dismiss the launch screen so the UI is reachable.
+  const launch = document.getElementById('launch');
+  if (launch) launch.classList.add('is-done');
+});

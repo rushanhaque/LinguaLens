@@ -16,7 +16,7 @@
   background: var(--bg);
   transition: opacity var(--d-slow) var(--ease-out), visibility var(--d-slow);
 }
-#launch.is-done { opacity: 0; visibility: hidden; }
+#launch.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
 
 .launch-mark {
   position: relative;
