@@ -389,8 +389,11 @@ function renderFocusChip() {
       `<span class="em">${esc(tr.em)}</span>` +
       `<span class="body">` +
         `<span class="w" ${rtl ? 'dir="rtl"' : ''}>${esc(tr.word)}</span>` +
-        (state.settings.showPhonetics && tr.phonetic
-          ? `<span class="ph">${esc(tr.phonetic)}</span>` : '') +
+        `<span class="meta">` +
+          `<span class="en">${esc(r.key)}</span>` +
+          (state.settings.showPhonetics && tr.phonetic
+            ? `<span class="ph">${esc(tr.phonetic)}</span>` : '') +
+        `</span>` +
       `</span>`;
     focusChip.setAttribute('aria-label', `${tr.word}, ${r.key}. Tap for details.`);
   }
@@ -547,25 +550,26 @@ function labelMarkup(t, tr, colorKey) {
     }
   }
 
-  /* The English gloss used to occupy a fourth row on every label. It was the
-     least useful line on screen — the learner is looking straight at the
-     object, so "laptop" tells them nothing they did not already know, and
-     four stacked rows per label turned a busy desk into a wall of text. The
-     gloss still exists, one tap away in the word sheet. What stays here is
-     the part that is actually being taught: the word, how to say it, and how
-     it agrees. */
+  /* The pairing is the lesson: the English word is what the learner already
+     has, the translation is what they are acquiring, and showing them
+     together is the whole point of pointing a camera at something. English,
+     pronunciation and confidence therefore share one meta row rather than
+     each claiming a line of their own — the label stays three rows tall
+     however many of them are switched on. */
+  const meta = [
+    `<span class="en">${esc(t.cls)}</span>`,
+    state.settings.showPhonetics && tr.phonetic ? `<span class="ph">${esc(tr.phonetic)}</span>` : '',
+    state.settings.showConfidence ? `<span class="conf">${Math.round(t.score * 100)}%</span>` : ''
+  ].filter(Boolean).join('');
+
   return `
     <div class="ar-word" ${rtl ? 'dir="rtl"' : ''}>
       <span class="em">${esc(tr.em)}</span>
       <span class="w">${esc(tr.word)}</span>
       ${g ? `<span class="g">${esc(g)}</span>` : ''}
     </div>
-    ${state.settings.showPhonetics && tr.phonetic ? `<div class="ar-phon">${esc(tr.phonetic)}</div>` : ''}
-    ${colorRow}
-    ${state.settings.showConfidence
-      ? `<div class="ar-en"><span class="txt">${esc(t.cls)}</span>` +
-        `<span class="conf">${Math.round(t.score * 100)}%</span></div>`
-      : ''}`;
+    <div class="ar-meta">${meta}</div>
+    ${colorRow}`;
 }
 
 function onLabelTap(node, trackId, cls, tr) {
