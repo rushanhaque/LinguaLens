@@ -301,8 +301,73 @@ const HEAD = {
   'king crab': 'crab', 'hermit crab': 'crab', crayfish: 'crab',
   'american lobster': 'crab', 'spiny lobster': 'crab', isopod: 'crab',
   starfish: 'starfish', 'sea urchin': 'starfish', 'sea cucumber': 'starfish',
-  jellyfish: 'jellyfish', 'sea anemone': 'jellyfish', 'brain coral': 'jellyfish',
-  flatworm: 'jellyfish', nematode: 'jellyfish'
+  jellyfish: 'jellyfish', 'jelly fish': 'jellyfish', 'sea anemone': 'jellyfish',
+  'brain coral': 'jellyfish', flatworm: 'jellyfish', nematode: 'jellyfish',
+  trilobite: 'crab', echidna: 'rabbit', armadillo: 'rabbit', hyena: 'wolf',
+  'three-toed sloth': 'monkey',
+
+  /* ── Gap fill ───────────────────────────────────────────────────────────
+     Everything below was measured as unmapped by tools/check-vocab.mjs
+     against the real 1000-class list, rather than guessed at. */
+
+  /* Words the app already knew but the map never routed. */
+  microwave: 'microwave', refrigerator: 'refrigerator', toaster: 'toaster',
+  'remote control': 'remote', 'typewriter keyboard': 'keyboard',
+  'bath towel': 'towel', dishrag: 'towel', handkerchief: 'towel',
+  bassinet: 'bed', teddy: 'teddy bear', 'jigsaw puzzle': 'puzzle',
+  'balance beam': 'sport', 'horizontal bar': 'sport', 'parallel bars': 'sport',
+  dogsled: 'sport', bobsled: 'sport', puck: 'sport', 'knee pad': 'sport',
+  drumstick: 'drum', 'ping-pong ball': 'sports ball', ballplayer: 'person',
+  groom: 'person', 'scuba diver': 'person', bikini: 'swimsuit',
+  'swimming trunks': 'swimsuit', maillot: 'swimsuit', brassiere: 'clothes',
+  cardigan: 'coat', cloak: 'coat', 'military uniform': 'uniform',
+  vestment: 'uniform', 'lab coat': 'coat', pajama: 'pyjamas', bib: 'clothes',
+  diaper: 'clothes', sarong: 'dress', overskirt: 'dress', hoopskirt: 'dress',
+  stole: 'scarf', 'feather boa': 'scarf', 'ski mask': 'mask', gasmask: 'mask',
+  'oxygen mask': 'mask', mask: 'mask', muzzle: 'mask', wig: 'wig',
+
+  /* Home and daily life. */
+  iron: 'iron', 'sewing machine': 'sewing machine', stove: 'stove',
+  'waffle iron': 'stove', rotisserie: 'stove', tub: 'bathtub',
+  bathtub: 'bathtub', 'shower cap': 'hat', 'plate rack': 'shelf',
+  bookshelf: 'shelf', 'entertainment center': 'shelf', bannister: 'stairs',
+  doormat: 'doormat', 'prayer rug': 'doormat', barrel: 'barrel',
+  'rain barrel': 'barrel', 'milk can': 'barrel', ashcan: 'bin',
+  'wooden spoon': 'spoon', cleaver: 'knife', 'letter opener': 'knife',
+  saltshaker: 'salt shaker', 'cocktail shaker': 'salt shaker',
+  bottlecap: 'bottle', mousetrap: 'tool', 'carpenter’s kit': 'tool',
+  "carpenter's kit": 'tool', plane: 'tool', pick: 'tool', mortar: 'bowl',
+  crutch: 'crutch', 'neck brace': 'crutch', stretcher: 'bed',
+  lipstick: 'lipstick', 'face powder': 'lipstick', perfume: 'perfume',
+  'hair spray': 'perfume', lotion: 'perfume', sunscreen: 'perfume',
+  candle: 'candle', 'jack-o’-lantern': 'candle', "jack-o'-lantern": 'candle',
+  whistle: 'whistle', 'safety pin': 'tool', 'switch': 'switch',
+  'electric switch': 'switch', 'wall socket': 'switch',
+
+  /* Electronics and machines. */
+  joystick: 'joystick', modem: 'router', 'hard disc': 'computer',
+  oscilloscope: 'monitor', 'radio telescope': 'binoculars',
+  'cash machine': 'cash machine', 'vending machine': 'vending machine',
+  'slot': 'vending machine', 'gas pump': 'gas pump', 'water tower': 'water tower',
+  odometer: 'clock', 'disk brake': 'tool', 'oil filter': 'tool',
+  grille: 'car', 'seat belt': 'car', 'recreational vehicle': 'van',
+  'half track': 'truck', tank: 'truck', 'lumbermill': 'house',
+  'paddlewheel': 'tool', 'potter’s wheel': 'tool', "potter's wheel": 'tool',
+  reel: 'tool', spindle: 'tool', coil: 'tool', knot: 'tool',
+
+  /* Places and structures. */
+  altar: 'altar', apiary: 'house', bakery: 'house', 'vault': 'house',
+  patio: 'house', 'tile roof': 'house', thatch: 'house', 'mobile home': 'house',
+  dock: 'bridge', breakwater: 'bridge', 'drilling platform': 'bridge',
+  pedestal: 'castle', 'maypole': 'castle', maze: 'fence', carousel: 'carousel',
+  stage: 'stage', 'movie theater': 'house', pinwheel: 'flower',
+  'yellow lady’s slipper': 'flower', "yellow lady's slipper": 'flower',
+  hay: 'hay', bubble: 'bubble', 'web site': 'monitor', velvet: 'clothes',
+  wool: 'clothes', 'chain mail': 'armour', breastplate: 'armour',
+  cuirass: 'armour', 'bulletproof vest': 'armour', shield: 'armour',
+  pickelhaube: 'armour', holster: 'armour', scabbard: 'armour',
+  cannon: 'cannon', amphibian: 'boat', snorkel: 'mask', 'wing': 'airplane',
+  'fire screen': 'fence', 'chain saw': 'tool', 'sewing needle': 'tool'
 };
 
 /* ── 3. Family rules ──────────────────────────────────────────────────────
@@ -310,13 +375,18 @@ const HEAD = {
    long tail — a hundred and twenty dog breeds, dozens of birds — onto the
    everyday word a learner actually wants. */
 const RULES = [
-  [/\bterrier\b|\bretriever\b|\bspaniel\b|\bsheepdog\b|\bcollie\b|\bschnauzer\b/, 'dog'],
-  [/\bhound\b|\bsetter\b|\bpoodle\b|\bmastiff\b|\bbulldog\b|\bcorgi\b|\bhusky\b/, 'dog'],
-  [/\bshepherd\b|\bpinscher\b|\bpointer\b|\bmalamute\b|\bpapillon\b|\bpekinese\b/, 'dog'],
-  [/\bchihuahua\b|\bbeagle\b|\bpug\b|\bboxer\b|\bdalmatian\b|\bbasenji\b|\bkeeshond\b/, 'dog'],
-  [/\bsamoyed\b|\bpomeranian\b|\bchow\b|\bnewfoundland\b|\bleonberg\b|\bdoberman\b/, 'dog'],
-  [/\brottweiler\b|\bkuvasz\b|\bkomondor\b|\bbriard\b|\bkelpie\b|\bmalinois\b/, 'dog'],
-  [/\bgreat dane\b|\bsaint bernard\b|\bgreat pyrenees\b|\beskimo dog\b|\bdhole\b/, 'dog'],
+  /* Dog breeds. The suffixes deliberately have no leading \b — ImageNet
+     writes "bloodhound", "foxhound", "elkhound" and "deerhound" as single
+     words, and a leading boundary silently missed every one of them. */
+  [/terrier\b|retriever\b|spaniel\b|sheepdog\b|collie\b|schnauzer\b|hound\b/, 'dog'],
+  [/setter\b|poodle\b|mastiff\b|bulldog\b|corgi\b|husky\b|griffon\b|ridgeback\b/, 'dog'],
+  [/shepherd\b|pinscher\b|pointer\b|malamute\b|papillon\b|pekinese\b|wolfhound\b/, 'dog'],
+  [/chihuahua\b|beagle\b|\bpug\b|\bboxer\b|dalmatian\b|basenji\b|keeshond\b/, 'dog'],
+  [/samoyed\b|pomeranian\b|\bchow\b|newfoundland\b|leonberg\b|doberman\b|borzoi\b/, 'dog'],
+  [/rottweiler\b|kuvasz\b|komondor\b|briard\b|kelpie\b|malinois\b|schipperke\b/, 'dog'],
+  [/great dane\b|saint bernard\b|great pyrenees\b|eskimo dog\b|\bdhole\b|whippet\b/, 'dog'],
+  [/greyhound\b|weimaraner\b|\blhasa\b|groenendael\b|bouvier\b|appenzeller\b/, 'dog'],
+  [/entlebucher\b|mountain dog\b|shih-tzu\b|bluetick\b|redbone\b|mexican hairless\b/, 'dog'],
   [/\bcat\b$/, 'cat'],
   [/\bmonkey\b|\blemur\b/, 'monkey'],
   [/\bwhale\b|\bshark\b|\bseal\b/, 'fish'],

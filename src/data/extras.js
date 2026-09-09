@@ -1786,5 +1786,418 @@ export const EXTRA_DICT = {
       ko: ['음식', 'eumsik', ''], zh: ['食物', 'shí wù', ''],
       hi: ['खाना', 'khaa-naa', 'm'], ar: ['طعام', 'ta-aam', 'm']
     }
+  },
+
+  /* ── Gap fill ─────────────────────────────────────────────────────────
+     Added after auditing the real 1000-class ImageNet list: each of these
+     is a label the classifier can actually produce that previously had
+     nowhere to land, so the detection was being thrown away. */
+
+  shelf: {
+    em: '🗄️', cat: 'furniture', lvl: 1, size: 'large',
+    t: {
+      es: ['estante', 'es-TAN-teh', 'm'], fr: ['étagère', 'ay-ta-ZHEHR', 'f'],
+      de: ['Regal', 'reh-GAAL', 'n'], it: ['scaffale', 'skaf-FA-leh', 'm'],
+      pt: ['prateleira', 'pra-teh-LAY-ra', 'f'], nl: ['plank', 'plank', 'c'],
+      ru: ['полка', 'POL-ka', 'f'], ja: ['棚', 'tana', ''],
+      ko: ['선반', 'seonban', ''], zh: ['架子', 'jià zi', ''],
+      hi: ['अलमारी', 'al-maa-ree', 'f'], ar: ['رف', 'raff', 'm']
+    }
+  },
+  stairs: {
+    em: '🪜', cat: 'furniture', lvl: 1, size: 'huge',
+    t: {
+      es: ['escaleras', 'es-ka-LEH-ras', 'p'], fr: ['escalier', 'es-ka-LYAY', 'm'],
+      de: ['Treppe', 'TREP-pe', 'f'], it: ['scale', 'SKA-leh', 'p'],
+      pt: ['escada', 'es-KA-da', 'f'], nl: ['trap', 'trap', 'c'],
+      ru: ['лестница', 'LYES-neet-sa', 'f'], ja: ['階段', 'kaidan', ''],
+      ko: ['계단', 'gyedan', ''], zh: ['楼梯', 'lóu tī', ''],
+      hi: ['सीढ़ियाँ', 'see-rhi-yaan', 'p'], ar: ['درج', 'daraj', 'm']
+    }
+  },
+  bin: {
+    em: '🗑️', cat: 'object', lvl: 1, size: 'medium',
+    t: {
+      es: ['papelera', 'pa-peh-LEH-ra', 'f'], fr: ['poubelle', 'poo-BEL', 'f'],
+      de: ['Mülleimer', 'MUUL-ay-mer', 'm'], it: ['cestino', 'ches-TEE-no', 'm'],
+      pt: ['lixeira', 'lee-SHAY-ra', 'f'], nl: ['prullenbak', 'PRUL-len-bak', 'c'],
+      ru: ['мусорка', 'MOO-sar-ka', 'f'], ja: ['ごみ箱', 'gomibako', ''],
+      ko: ['쓰레기통', 'sseuregitong', ''], zh: ['垃圾桶', 'lā jī tǒng', ''],
+      hi: ['कूड़ेदान', 'koo-re-daan', 'm'], ar: ['سلة مهملات', 'sallat muhmalaat', 'f']
+    }
+  },
+  bathtub: {
+    em: '🛁', cat: 'furniture', lvl: 2, size: 'large',
+    t: {
+      es: ['bañera', 'ba-NYEH-ra', 'f'], fr: ['baignoire', 'beh-NYWAR', 'f'],
+      de: ['Badewanne', 'BAA-de-va-ne', 'f'], it: ['vasca', 'VAS-ka', 'f'],
+      pt: ['banheira', 'ba-NYAY-ra', 'f'], nl: ['badkuip', 'BAT-kowp', 'c'],
+      ru: ['ванна', 'VAN-na', 'f'], ja: ['浴槽', 'yokusou', ''],
+      ko: ['욕조', 'yokjo', ''], zh: ['浴缸', 'yù gāng', ''],
+      hi: ['बाथटब', 'baath-tab', 'm'], ar: ['حوض استحمام', 'hawd istihmaam', 'm']
+    }
+  },
+  stove: {
+    em: '🔥', cat: 'appliance', lvl: 2, size: 'large',
+    t: {
+      es: ['estufa', 'es-TOO-fa', 'f'], fr: ['cuisinière', 'kwee-zee-NYEHR', 'f'],
+      de: ['Herd', 'hayrt', 'm'], it: ['fornello', 'for-NEL-lo', 'm'],
+      pt: ['fogão', 'fo-GOWN', 'm'], nl: ['fornuis', 'for-NOWS', 'n'],
+      ru: ['плита', 'plee-TA', 'f'], ja: ['コンロ', 'konro', ''],
+      ko: ['가스레인지', 'gaseureinji', ''], zh: ['炉子', 'lú zi', ''],
+      hi: ['चूल्हा', 'chool-haa', 'm'], ar: ['موقد', 'mawqid', 'm']
+    }
+  },
+  iron: {
+    em: '🧺', cat: 'appliance', lvl: 2, size: 'small',
+    t: {
+      es: ['plancha', 'PLAN-cha', 'f'], fr: ['fer à repasser', 'fehr a ruh-pa-SAY', 'm'],
+      de: ['Bügeleisen', 'BUU-gel-ay-zen', 'n'], it: ['ferro da stiro', 'FEH-rro da STEE-ro', 'm'],
+      pt: ['ferro de passar', 'FEH-hoo jee pa-SAR', 'm'], nl: ['strijkijzer', 'STRYK-y-zer', 'n'],
+      ru: ['утюг', 'oo-TYOOK', 'm'], ja: ['アイロン', 'airon', ''],
+      ko: ['다리미', 'darimi', ''], zh: ['熨斗', 'yùn dǒu', ''],
+      hi: ['इस्त्री', 'is-tree', 'f'], ar: ['مكواة', 'mikwaat', 'f']
+    }
+  },
+  'sewing machine': {
+    em: '🧵', cat: 'appliance', lvl: 3, size: 'medium',
+    t: {
+      es: ['máquina de coser', 'MA-kee-na deh ko-SEHR', 'f'], fr: ['machine à coudre', 'ma-SHEEN a KOO-druh', 'f'],
+      de: ['Nähmaschine', 'NAY-ma-shee-ne', 'f'], it: ['macchina da cucire', 'MAK-kee-na da koo-CHEE-reh', 'f'],
+      pt: ['máquina de costura', 'MA-kee-na jee kos-TOO-ra', 'f'], nl: ['naaimachine', 'NY-ma-shee-ne', 'c'],
+      ru: ['швейная машина', 'SHVYAY-na-ya ma-SHEE-na', 'f'], ja: ['ミシン', 'mishin', ''],
+      ko: ['재봉틀', 'jaebongteul', ''], zh: ['缝纫机', 'féng rèn jī', ''],
+      hi: ['सिलाई मशीन', 'si-laa-ee ma-sheen', 'f'], ar: ['ماكينة خياطة', 'maakinat khiyaata', 'f']
+    }
+  },
+  doormat: {
+    em: '🚪', cat: 'object', lvl: 3, size: 'medium',
+    t: {
+      es: ['felpudo', 'fel-POO-do', 'm'], fr: ['paillasson', 'pah-ya-SOHN', 'm'],
+      de: ['Fußmatte', 'FOOS-ma-te', 'f'], it: ['zerbino', 'tsehr-BEE-no', 'm'],
+      pt: ['capacho', 'ka-PA-shoo', 'm'], nl: ['deurmat', 'DUR-mat', 'c'],
+      ru: ['коврик', 'KOV-reek', 'm'], ja: ['玄関マット', 'genkanmatto', ''],
+      ko: ['현관 매트', 'hyeongwan maeteu', ''], zh: ['门垫', 'mén diàn', ''],
+      hi: ['पायदान', 'paay-daan', 'm'], ar: ['ممسحة', 'mimsaha', 'f']
+    }
+  },
+  barrel: {
+    em: '🛢️', cat: 'object', lvl: 3, size: 'large',
+    t: {
+      es: ['barril', 'ba-RREEL', 'm'], fr: ['tonneau', 'to-NOH', 'm'],
+      de: ['Fass', 'fas', 'n'], it: ['barile', 'ba-REE-leh', 'm'],
+      pt: ['barril', 'ba-HEEL', 'm'], nl: ['vat', 'vat', 'n'],
+      ru: ['бочка', 'BOCH-ka', 'f'], ja: ['樽', 'taru', ''],
+      ko: ['통', 'tong', ''], zh: ['桶', 'tǒng', ''],
+      hi: ['पीपा', 'pee-paa', 'm'], ar: ['برميل', 'barmeel', 'm']
+    }
+  },
+  'salt shaker': {
+    em: '🧂', cat: 'kitchen', lvl: 3, size: 'tiny',
+    t: {
+      es: ['salero', 'sa-LEH-ro', 'm'], fr: ['salière', 'sa-LYEHR', 'f'],
+      de: ['Salzstreuer', 'ZALTS-shtroy-er', 'm'], it: ['saliera', 'sa-LYEH-ra', 'f'],
+      pt: ['saleiro', 'sa-LAY-roo', 'm'], nl: ['zoutvaatje', 'ZOWT-vaat-ye', 'n'],
+      ru: ['солонка', 'sa-LON-ka', 'f'], ja: ['塩入れ', 'shioire', ''],
+      ko: ['소금통', 'sogeumtong', ''], zh: ['盐瓶', 'yán píng', ''],
+      hi: ['नमकदानी', 'na-mak-daa-nee', 'f'], ar: ['ملاحة', 'mallaaha', 'f']
+    }
+  },
+  switch: {
+    em: '💡', cat: 'object', lvl: 2, size: 'tiny',
+    t: {
+      es: ['interruptor', 'een-teh-rroop-TOR', 'm'], fr: ['interrupteur', 'an-teh-rup-TUR', 'm'],
+      de: ['Schalter', 'SHAL-ter', 'm'], it: ['interruttore', 'een-teh-rroot-TO-reh', 'm'],
+      pt: ['interruptor', 'een-teh-hoop-TOR', 'm'], nl: ['schakelaar', 'SKHAA-ke-laar', 'c'],
+      ru: ['выключатель', 'vy-klyoo-CHA-tyel', 'm'], ja: ['スイッチ', 'suicchi', ''],
+      ko: ['스위치', 'seuwichi', ''], zh: ['开关', 'kāi guān', ''],
+      hi: ['स्विच', 'svich', 'm'], ar: ['مفتاح', 'miftaah', 'm']
+    }
+  },
+  crutch: {
+    em: '🩼', cat: 'object', lvl: 3, size: 'large',
+    t: {
+      es: ['muleta', 'moo-LEH-ta', 'f'], fr: ['béquille', 'bay-KEE-y', 'f'],
+      de: ['Krücke', 'KRUUK-ke', 'f'], it: ['stampella', 'stam-PEL-la', 'f'],
+      pt: ['muleta', 'moo-LEH-ta', 'f'], nl: ['kruk', 'kruk', 'c'],
+      ru: ['костыль', 'kas-TYL', 'm'], ja: ['松葉杖', 'matsubadue', ''],
+      ko: ['목발', 'mokbal', ''], zh: ['拐杖', 'guǎi zhàng', ''],
+      hi: ['बैसाखी', 'bai-saa-khee', 'f'], ar: ['عكاز', 'ukkaaz', 'm']
+    }
+  },
+  mask: {
+    em: '😷', cat: 'clothing', lvl: 1, size: 'small',
+    t: {
+      es: ['máscara', 'MAS-ka-ra', 'f'], fr: ['masque', 'mask', 'm'],
+      de: ['Maske', 'MAS-ke', 'f'], it: ['maschera', 'MAS-keh-ra', 'f'],
+      pt: ['máscara', 'MAS-ka-ra', 'f'], nl: ['masker', 'MAS-ker', 'n'],
+      ru: ['маска', 'MAS-ka', 'f'], ja: ['マスク', 'masuku', ''],
+      ko: ['마스크', 'maseukeu', ''], zh: ['面具', 'miàn jù', ''],
+      hi: ['मुखौटा', 'mu-khow-taa', 'm'], ar: ['قناع', 'qinaa', 'm']
+    }
+  },
+  scarf: {
+    em: '🧣', cat: 'clothing', lvl: 2, size: 'small',
+    t: {
+      es: ['bufanda', 'boo-FAN-da', 'f'], fr: ['écharpe', 'ay-SHARP', 'f'],
+      de: ['Schal', 'shaal', 'm'], it: ['sciarpa', 'SHAR-pa', 'f'],
+      pt: ['cachecol', 'ka-sheh-KOL', 'm'], nl: ['sjaal', 'shaal', 'c'],
+      ru: ['шарф', 'sharf', 'm'], ja: ['マフラー', 'mafuraa', ''],
+      ko: ['목도리', 'mokdori', ''], zh: ['围巾', 'wéi jīn', ''],
+      hi: ['दुपट्टा', 'du-pat-taa', 'm'], ar: ['وشاح', 'wishaah', 'm']
+    }
+  },
+  clothes: {
+    em: '👚', cat: 'clothing', lvl: 1, size: 'medium',
+    t: {
+      es: ['ropa', 'RO-pa', 'f'], fr: ['vêtements', 'vet-MAHN', 'p'],
+      de: ['Kleidung', 'KLY-doong', 'f'], it: ['vestiti', 'ves-TEE-tee', 'p'],
+      pt: ['roupa', 'HOH-pa', 'f'], nl: ['kleding', 'KLAY-ding', 'c'],
+      ru: ['одежда', 'a-DYEZH-da', 'f'], ja: ['服', 'fuku', ''],
+      ko: ['옷', 'ot', ''], zh: ['衣服', 'yī fu', ''],
+      hi: ['कपड़े', 'kap-re', 'p'], ar: ['ملابس', 'malaabis', 'p']
+    }
+  },
+  uniform: {
+    em: '🎽', cat: 'clothing', lvl: 2, size: 'large',
+    t: {
+      es: ['uniforme', 'oo-nee-FOR-meh', 'm'], fr: ['uniforme', 'ew-nee-FORM', 'm'],
+      de: ['Uniform', 'OO-nee-form', 'f'], it: ['uniforme', 'oo-nee-FOR-meh', 'f'],
+      pt: ['uniforme', 'oo-nee-FOR-mee', 'm'], nl: ['uniform', 'ew-nee-FORM', 'n'],
+      ru: ['форма', 'FOR-ma', 'f'], ja: ['制服', 'seifuku', ''],
+      ko: ['제복', 'jebok', ''], zh: ['制服', 'zhì fú', ''],
+      hi: ['वर्दी', 'var-dee', 'f'], ar: ['زي', 'ziyy', 'm']
+    }
+  },
+  pyjamas: {
+    em: '🩱', cat: 'clothing', lvl: 2, size: 'large',
+    t: {
+      es: ['pijama', 'pee-KHA-ma', 'm'], fr: ['pyjama', 'pee-zha-MA', 'm'],
+      de: ['Schlafanzug', 'SHLAAF-an-tsook', 'm'], it: ['pigiama', 'pee-JA-ma', 'm'],
+      pt: ['pijama', 'pee-ZHA-ma', 'm'], nl: ['pyjama', 'pee-YAA-ma', 'c'],
+      ru: ['пижама', 'pee-ZHA-ma', 'f'], ja: ['パジャマ', 'pajama', ''],
+      ko: ['잠옷', 'jamot', ''], zh: ['睡衣', 'shuì yī', ''],
+      hi: ['पजामा', 'pa-jaa-maa', 'm'], ar: ['بيجاما', 'beejaama', 'f']
+    }
+  },
+  swimsuit: {
+    em: '🩱', cat: 'clothing', lvl: 2, size: 'medium',
+    t: {
+      es: ['bañador', 'ba-nya-DOR', 'm'], fr: ['maillot de bain', 'ma-YOH duh BAN', 'm'],
+      de: ['Badeanzug', 'BAA-de-an-tsook', 'm'], it: ['costume da bagno', 'kos-TOO-meh da BA-nyo', 'm'],
+      pt: ['maiô', 'ma-YOH', 'm'], nl: ['badpak', 'BAT-pak', 'n'],
+      ru: ['купальник', 'koo-PAL-neek', 'm'], ja: ['水着', 'mizugi', ''],
+      ko: ['수영복', 'suyeongbok', ''], zh: ['泳衣', 'yǒng yī', ''],
+      hi: ['तैराकी पोशाक', 'tai-raa-kee po-shaak', 'f'], ar: ['ملابس سباحة', 'malaabis sibaaha', 'p']
+    }
+  },
+  wig: {
+    em: '💇', cat: 'clothing', lvl: 3, size: 'small',
+    t: {
+      es: ['peluca', 'peh-LOO-ka', 'f'], fr: ['perruque', 'peh-REWK', 'f'],
+      de: ['Perücke', 'peh-RUUK-ke', 'f'], it: ['parrucca', 'par-ROOK-ka', 'f'],
+      pt: ['peruca', 'peh-ROO-ka', 'f'], nl: ['pruik', 'prowk', 'c'],
+      ru: ['парик', 'pa-REEK', 'm'], ja: ['かつら', 'katsura', ''],
+      ko: ['가발', 'gabal', ''], zh: ['假发', 'jiǎ fà', ''],
+      hi: ['विग', 'vig', 'm'], ar: ['شعر مستعار', 'shar musta-aar', 'm']
+    }
+  },
+  lipstick: {
+    em: '💄', cat: 'object', lvl: 2, size: 'tiny',
+    t: {
+      es: ['pintalabios', 'peen-ta-LA-byos', 'm'], fr: ['rouge à lèvres', 'roozh a LEH-vruh', 'm'],
+      de: ['Lippenstift', 'LIP-pen-shtift', 'm'], it: ['rossetto', 'ros-SET-to', 'm'],
+      pt: ['batom', 'ba-TOHN', 'm'], nl: ['lippenstift', 'LIP-pen-stift', 'c'],
+      ru: ['помада', 'pa-MA-da', 'f'], ja: ['口紅', 'kuchibeni', ''],
+      ko: ['립스틱', 'ripseutik', ''], zh: ['口红', 'kǒu hóng', ''],
+      hi: ['लिपस्टिक', 'lip-stik', 'f'], ar: ['أحمر شفاه', 'ahmar shifaah', 'm']
+    }
+  },
+  perfume: {
+    em: '🧴', cat: 'object', lvl: 2, size: 'tiny',
+    t: {
+      es: ['perfume', 'pehr-FOO-meh', 'm'], fr: ['parfum', 'par-FUHN', 'm'],
+      de: ['Parfüm', 'par-FUUM', 'n'], it: ['profumo', 'pro-FOO-mo', 'm'],
+      pt: ['perfume', 'pehr-FOO-mee', 'm'], nl: ['parfum', 'par-FUHM', 'n'],
+      ru: ['духи', 'doo-KHEE', 'p'], ja: ['香水', 'kousui', ''],
+      ko: ['향수', 'hyangsu', ''], zh: ['香水', 'xiāng shuǐ', ''],
+      hi: ['इत्र', 'itr', 'm'], ar: ['عطر', 'itr', 'm']
+    }
+  },
+  whistle: {
+    em: '🎯', cat: 'object', lvl: 3, size: 'tiny',
+    t: {
+      es: ['silbato', 'seel-BA-to', 'm'], fr: ['sifflet', 'see-FLAY', 'm'],
+      de: ['Pfeife', 'PFY-fe', 'f'], it: ['fischietto', 'fees-KYET-to', 'm'],
+      pt: ['apito', 'a-PEE-too', 'm'], nl: ['fluitje', 'FLOWT-ye', 'n'],
+      ru: ['свисток', 'svees-TOK', 'm'], ja: ['笛', 'fue', ''],
+      ko: ['호루라기', 'horuragi', ''], zh: ['哨子', 'shào zi', ''],
+      hi: ['सीटी', 'see-tee', 'f'], ar: ['صافرة', 'saafira', 'f']
+    }
+  },
+  puzzle: {
+    em: '🧩', cat: 'object', lvl: 2, size: 'medium',
+    t: {
+      es: ['rompecabezas', 'rom-peh-ka-BEH-sas', 'm'], fr: ['puzzle', 'PUH-zluh', 'm'],
+      de: ['Puzzle', 'PAH-zel', 'n'], it: ['puzzle', 'PAZ-zel', 'm'],
+      pt: ['quebra-cabeça', 'KEH-bra ka-BEH-sa', 'm'], nl: ['puzzel', 'PUH-zel', 'c'],
+      ru: ['пазл', 'pazl', 'm'], ja: ['パズル', 'pazuru', ''],
+      ko: ['퍼즐', 'peojeul', ''], zh: ['拼图', 'pīn tú', ''],
+      hi: ['पहेली', 'pa-he-lee', 'f'], ar: ['أحجية', 'uhjiyya', 'f']
+    }
+  },
+  joystick: {
+    em: '🕹️', cat: 'electronics', lvl: 2, size: 'small',
+    t: {
+      es: ['mando', 'MAN-do', 'm'], fr: ['manette', 'ma-NET', 'f'],
+      de: ['Joystick', 'DZHOY-stik', 'm'], it: ['joystick', 'DZHOY-stik', 'm'],
+      pt: ['controle', 'kon-TRO-lee', 'm'], nl: ['joystick', 'DZHOY-stik', 'c'],
+      ru: ['джойстик', 'DZHOY-steek', 'm'], ja: ['コントローラー', 'kontorooraa', ''],
+      ko: ['조이스틱', 'joiseutik', ''], zh: ['摇杆', 'yáo gǎn', ''],
+      hi: ['जॉयस्टिक', 'jois-tik', 'm'], ar: ['عصا التحكم', 'asa at-tahakkum', 'f']
+    }
+  },
+  router: {
+    em: '📶', cat: 'electronics', lvl: 2, size: 'small',
+    t: {
+      es: ['router', 'ROO-ter', 'm'], fr: ['routeur', 'roo-TUR', 'm'],
+      de: ['Router', 'ROW-ter', 'm'], it: ['router', 'ROO-ter', 'm'],
+      pt: ['roteador', 'ho-teh-a-DOR', 'm'], nl: ['router', 'ROO-ter', 'c'],
+      ru: ['роутер', 'RO-oo-ter', 'm'], ja: ['ルーター', 'ruutaa', ''],
+      ko: ['공유기', 'gongyugi', ''], zh: ['路由器', 'lù yóu qì', ''],
+      hi: ['राउटर', 'raa-u-tar', 'm'], ar: ['راوتر', 'raawtar', 'm']
+    }
+  },
+  'vending machine': {
+    em: '🏪', cat: 'appliance', lvl: 3, size: 'huge',
+    t: {
+      es: ['máquina expendedora', 'MA-kee-na eks-pen-deh-DO-ra', 'f'], fr: ['distributeur', 'dees-tree-bew-TUR', 'm'],
+      de: ['Automat', 'ow-to-MAAT', 'm'], it: ['distributore', 'dees-tree-boo-TO-reh', 'm'],
+      pt: ['máquina de vendas', 'MA-kee-na jee VEN-das', 'f'], nl: ['automaat', 'ow-to-MAAT', 'c'],
+      ru: ['автомат', 'af-ta-MAT', 'm'], ja: ['自動販売機', 'jidouhanbaiki', ''],
+      ko: ['자판기', 'japangi', ''], zh: ['自动售货机', 'zì dòng shòu huò jī', ''],
+      hi: ['वेंडिंग मशीन', 'ven-ding ma-sheen', 'f'], ar: ['آلة بيع', 'aalat bay', 'f']
+    }
+  },
+  'cash machine': {
+    em: '🏧', cat: 'appliance', lvl: 3, size: 'large',
+    t: {
+      es: ['cajero automático', 'ka-KHEH-ro ow-to-MA-tee-ko', 'm'], fr: ['distributeur de billets', 'dees-tree-bew-TUR duh bee-YAY', 'm'],
+      de: ['Geldautomat', 'GELT-ow-to-maat', 'm'], it: ['bancomat', 'BAN-ko-mat', 'm'],
+      pt: ['caixa eletrônico', 'KY-sha eh-leh-TRO-nee-koo', 'm'], nl: ['geldautomaat', 'KHELT-ow-to-maat', 'c'],
+      ru: ['банкомат', 'ban-ka-MAT', 'm'], ja: ['ATM', 'eetiiemu', ''],
+      ko: ['현금인출기', 'hyeongeuminchulgi', ''], zh: ['自动取款机', 'zì dòng qǔ kuǎn jī', ''],
+      hi: ['एटीएम', 'e-tee-em', 'm'], ar: ['صراف آلي', 'sarraaf aali', 'm']
+    }
+  },
+  'gas pump': {
+    em: '⛽', cat: 'street', lvl: 3, size: 'large',
+    t: {
+      es: ['surtidor', 'soor-tee-DOR', 'm'], fr: ['pompe à essence', 'pohmp a eh-SAHNS', 'f'],
+      de: ['Zapfsäule', 'TSAPF-zoy-le', 'f'], it: ['pompa di benzina', 'POM-pa dee ben-DZEE-na', 'f'],
+      pt: ['bomba de gasolina', 'BOM-ba jee ga-zo-LEE-na', 'f'], nl: ['benzinepomp', 'ben-ZEE-ne-pomp', 'c'],
+      ru: ['бензоколонка', 'ben-za-ka-LON-ka', 'f'], ja: ['給油機', 'kyuuyuki', ''],
+      ko: ['주유기', 'juyugi', ''], zh: ['加油机', 'jiā yóu jī', ''],
+      hi: ['पेट्रोल पंप', 'pet-rol pamp', 'm'], ar: ['مضخة وقود', 'midakhkhat waquud', 'f']
+    }
+  },
+  'water tower': {
+    em: '🗼', cat: 'place', lvl: 3, size: 'huge',
+    t: {
+      es: ['torre de agua', 'TO-rreh deh A-gwa', 'f'], fr: ['château d’eau', 'sha-TOH DOH', 'm'],
+      de: ['Wasserturm', 'VAS-ser-toorm', 'm'], it: ['torre idrica', 'TO-rreh EE-dree-ka', 'f'],
+      pt: ['caixa d’água', 'KY-sha DA-gwa', 'f'], nl: ['watertoren', 'VAA-ter-to-ren', 'c'],
+      ru: ['водонапорная башня', 'va-da-na-POR-na-ya BASH-nya', 'f'], ja: ['給水塔', 'kyuusuitou', ''],
+      ko: ['급수탑', 'geupsutap', ''], zh: ['水塔', 'shuǐ tǎ', ''],
+      hi: ['पानी की टंकी', 'paa-nee kee tan-kee', 'f'], ar: ['خزان مياه', 'khazzaan miyaah', 'm']
+    }
+  },
+  altar: {
+    em: '⛪', cat: 'place', lvl: 3, size: 'large',
+    t: {
+      es: ['altar', 'al-TAR', 'm'], fr: ['autel', 'oh-TEL', 'm'],
+      de: ['Altar', 'al-TAAR', 'm'], it: ['altare', 'al-TA-reh', 'm'],
+      pt: ['altar', 'al-TAR', 'm'], nl: ['altaar', 'al-TAAR', 'n'],
+      ru: ['алтарь', 'al-TAR', 'm'], ja: ['祭壇', 'saidan', ''],
+      ko: ['제단', 'jedan', ''], zh: ['祭坛', 'jì tán', ''],
+      hi: ['वेदी', 've-dee', 'f'], ar: ['مذبح', 'madhbah', 'm']
+    }
+  },
+  carousel: {
+    em: '🎠', cat: 'place', lvl: 3, size: 'huge',
+    t: {
+      es: ['carrusel', 'ka-rroo-SEL', 'm'], fr: ['manège', 'ma-NEZH', 'm'],
+      de: ['Karussell', 'ka-roo-SEL', 'n'], it: ['giostra', 'JOS-tra', 'f'],
+      pt: ['carrossel', 'ka-hoh-SEL', 'm'], nl: ['draaimolen', 'DRY-mo-len', 'c'],
+      ru: ['карусель', 'ka-roo-SYEL', 'f'], ja: ['メリーゴーランド', 'meriigoorando', ''],
+      ko: ['회전목마', 'hoejeonmokma', ''], zh: ['旋转木马', 'xuán zhuǎn mù mǎ', ''],
+      hi: ['झूला', 'jhoo-laa', 'm'], ar: ['دوامة', 'dawwaama', 'f']
+    }
+  },
+  stage: {
+    em: '🎭', cat: 'place', lvl: 2, size: 'huge',
+    t: {
+      es: ['escenario', 'es-seh-NA-ryo', 'm'], fr: ['scène', 'sen', 'f'],
+      de: ['Bühne', 'BUU-ne', 'f'], it: ['palco', 'PAL-ko', 'm'],
+      pt: ['palco', 'PAL-koo', 'm'], nl: ['podium', 'PO-dee-um', 'n'],
+      ru: ['сцена', 'STSE-na', 'f'], ja: ['舞台', 'butai', ''],
+      ko: ['무대', 'mudae', ''], zh: ['舞台', 'wǔ tái', ''],
+      hi: ['मंच', 'manch', 'm'], ar: ['مسرح', 'masrah', 'm']
+    }
+  },
+  hay: {
+    em: '🌾', cat: 'nature', lvl: 3, size: 'large',
+    t: {
+      es: ['heno', 'EH-no', 'm'], fr: ['foin', 'fwan', 'm'],
+      de: ['Heu', 'hoy', 'n'], it: ['fieno', 'FYEH-no', 'm'],
+      pt: ['feno', 'FEH-noo', 'm'], nl: ['hooi', 'hoy', 'n'],
+      ru: ['сено', 'SYE-na', 'n'], ja: ['干し草', 'hoshikusa', ''],
+      ko: ['건초', 'geoncho', ''], zh: ['干草', 'gān cǎo', ''],
+      hi: ['सूखी घास', 'soo-khee ghaas', 'f'], ar: ['قش', 'qashsh', 'm']
+    }
+  },
+  bubble: {
+    em: '🫧', cat: 'object', lvl: 2, size: 'small',
+    t: {
+      es: ['burbuja', 'boor-BOO-kha', 'f'], fr: ['bulle', 'bewl', 'f'],
+      de: ['Blase', 'BLAA-ze', 'f'], it: ['bolla', 'BOL-la', 'f'],
+      pt: ['bolha', 'BO-lya', 'f'], nl: ['bel', 'bel', 'c'],
+      ru: ['пузырь', 'poo-ZYR', 'm'], ja: ['泡', 'awa', ''],
+      ko: ['거품', 'geopum', ''], zh: ['泡泡', 'pào pao', ''],
+      hi: ['बुलबुला', 'bul-bu-laa', 'm'], ar: ['فقاعة', 'fuqaa-a', 'f']
+    }
+  },
+  armour: {
+    em: '🛡️', cat: 'object', lvl: 3, size: 'large',
+    t: {
+      es: ['armadura', 'ar-ma-DOO-ra', 'f'], fr: ['armure', 'ar-MEWR', 'f'],
+      de: ['Rüstung', 'RUUS-toong', 'f'], it: ['armatura', 'ar-ma-TOO-ra', 'f'],
+      pt: ['armadura', 'ar-ma-DOO-ra', 'f'], nl: ['harnas', 'HAR-nas', 'n'],
+      ru: ['доспехи', 'das-PYE-khee', 'p'], ja: ['鎧', 'yoroi', ''],
+      ko: ['갑옷', 'gabot', ''], zh: ['盔甲', 'kuī jiǎ', ''],
+      hi: ['कवच', 'ka-vach', 'm'], ar: ['درع', 'dir', 'm']
+    }
+  },
+  cannon: {
+    em: '💣', cat: 'object', lvl: 3, size: 'large',
+    t: {
+      es: ['cañón', 'ka-NYON', 'm'], fr: ['canon', 'ka-NOHN', 'm'],
+      de: ['Kanone', 'ka-NO-ne', 'f'], it: ['cannone', 'kan-NO-neh', 'm'],
+      pt: ['canhão', 'ka-NYOWN', 'm'], nl: ['kanon', 'ka-NON', 'n'],
+      ru: ['пушка', 'POOSH-ka', 'f'], ja: ['大砲', 'taihou', ''],
+      ko: ['대포', 'daepo', ''], zh: ['大炮', 'dà pào', ''],
+      hi: ['तोप', 'top', 'f'], ar: ['مدفع', 'midfa', 'm']
+    }
+  },
+  sport: {
+    em: '🏅', cat: 'sport', lvl: 1, size: 'large',
+    t: {
+      es: ['deporte', 'deh-POR-teh', 'm'], fr: ['sport', 'spor', 'm'],
+      de: ['Sport', 'shport', 'm'], it: ['sport', 'sport', 'm'],
+      pt: ['esporte', 'es-POR-chee', 'm'], nl: ['sport', 'sport', 'c'],
+      ru: ['спорт', 'sport', 'm'], ja: ['スポーツ', 'supootsu', ''],
+      ko: ['운동', 'undong', ''], zh: ['运动', 'yùn dòng', ''],
+      hi: ['खेल', 'khel', 'm'], ar: ['رياضة', 'riyaada', 'f']
+    }
   }
 };

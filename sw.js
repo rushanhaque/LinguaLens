@@ -8,7 +8,7 @@
  *     they are versioned by URL and are far too large to re-fetch casually.
  */
 
-const VERSION = 'v3.1.0';
+const VERSION = 'v3.2.0';
 const SHELL_CACHE = `lemma-shell-${VERSION}`;
 const VENDOR_CACHE = 'lemma-vendor';   // survives shell upgrades on purpose
 const MODEL_CACHE = 'lemma-model';

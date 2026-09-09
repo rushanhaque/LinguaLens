@@ -73,5 +73,62 @@ for (const label of SAMPLES) {
 }
 console.log(`\n${mapped}/${SAMPLES.length} samples resolved`);
 
+/* 4. Coverage against the real ImageNet-1k label set.
+      The list is extracted from the MobileNet bundle itself and cached beside
+      this script, so the audit measures what the model can actually emit
+      rather than what we remember it emitting. Run with --refresh to refetch. */
+const CACHE = new URL('./imagenet-classes.json', import.meta.url);
+const BUNDLE = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js';
+
+async function imagenetClasses() {
+  if (!process.argv.includes('--refresh')) {
+    try { return JSON.parse(await readFile(CACHE, 'utf8')); } catch { /* fetch it */ }
+  }
+  const js = await (await fetch(BUNDLE)).text();
+  const byIndex = {};
+  for (const m of js.matchAll(/(\d{1,3}):"((?:[^"\\]|\\.)*)"/g)) {
+    const i = Number(m[1]);
+    if (i >= 0 && i <= 999 && m[2].length > 1) byIndex[i] = m[2];
+  }
+  const list = Object.keys(byIndex).map(Number).sort((a, b) => a - b).map((i) => byIndex[i]);
+  if (list.length === 1000) {
+    await (await import('node:fs/promises')).writeFile(CACHE, JSON.stringify(list, null, 0));
+  }
+  return list;
+}
+
+try {
+  const classes = await imagenetClasses();
+  if (classes.length !== 1000) {
+    console.log(`\nImageNet list looks wrong (${classes.length} entries) — skipping coverage`);
+  } else {
+    /* Deliberately unmapped. Firearms and instruments of execution have no
+       place in a classroom vocabulary app, and the rest are words too
+       ambiguous to name safely — ImageNet's "bow" is a weapon, a ribbon and
+       a violin bow at once. Listing them here keeps the coverage report
+       honest: these are choices, not gaps. */
+    const EXCLUDED = new Set([
+      'assault rifle', 'revolver', 'rifle', 'missile', 'projectile',
+      'guillotine', 'nipple', 'bow', 'brass', 'pole', 'manhole cover'
+    ]);
+    const missed = classes.filter((c) => { const k = mapImagenet(c); return !k || !DICT[k]; });
+    const unexpected = missed.filter((c) => !EXCLUDED.has(c.split(',')[0]));
+    const pct = ((classes.length - missed.length) / classes.length) * 100;
+    console.log(`\nImageNet coverage  ${classes.length - missed.length}/1000  (${pct.toFixed(1)}%)`);
+    console.log(`  ${missed.length - unexpected.length} excluded by policy, ${unexpected.length} unaccounted for`);
+    if (unexpected.length) {
+      console.log('Unaccounted for:');
+      console.log('  ' + unexpected.map((c) => c.split(',')[0]).join(', '));
+    }
+    // Coverage is a quality bar, not a correctness one: some ImageNet classes
+    // are deliberately unmapped, so this warns rather than fails.
+    if (pct < 90) console.log('\nWarning: coverage below 90%');
+  }
+} catch (e) {
+  console.log(`\nCoverage check skipped (${e.message})`);
+}
+
 console.log(fail ? `\nFAILED — ${fail} problem(s)` : '\nAll vocabulary checks passed');
-process.exit(fail ? 1 : 0);
+// Set the code rather than calling process.exit(): an outstanding fetch handle
+// makes an immediate exit abort with a libuv assertion on Windows.
+process.exitCode = fail ? 1 : 0;

@@ -23,7 +23,7 @@ import { $, $$, el, esc, toast, openSheet, closeSheet, clamp } from '../ui/kit.j
 import { icon } from '../ui/icons.js';
 import { openWordSheet } from './wordSheet.js';
 
-let video, canvas, ctx, labelLayer, stage, statusPill, strip, focusChip;
+let video, canvas, ctx, labelLayer, stage, statusPill, focusChip;
 let cam = null;
 let tracker = createTracker();
 const palette = createPalette();
@@ -38,7 +38,6 @@ let lastDetect = 0;
 let frameTimes = [];
 let liveTracks = [];
 let labelNodes = new Map();     // track id → element
-let stripCards = new Map();     // class → element
 let cssZoom = 1;
 let paused = false;
 
@@ -55,7 +54,6 @@ export async function initCamera(setProgress) {
   labelLayer = $('#label-layer');
   stage = $('#stage');
   statusPill = $('#status-pill');
-  strip = $('#detected-strip');
   focusChip = $('#focus-chip');
 
   wireControls();
@@ -203,7 +201,6 @@ async function detect() {
     state.runtime.live = liveTracks;
     readColors(liveTracks);
     handleDiscoveries(liveTracks);
-    syncStrip(liveTracks);
 
     /* The classifier names whatever the camera is centred on, including the
        hundreds of everyday objects COCO has no label for. It paces itself
@@ -394,7 +391,6 @@ function renderFocusChip() {
         `<span class="w" ${rtl ? 'dir="rtl"' : ''}>${esc(tr.word)}</span>` +
         (state.settings.showPhonetics && tr.phonetic
           ? `<span class="ph">${esc(tr.phonetic)}</span>` : '') +
-        `<span class="e">${esc(r.key)}</span>` +
       `</span>`;
     focusChip.setAttribute('aria-label', `${tr.word}, ${r.key}. Tap for details.`);
   }
@@ -422,20 +418,21 @@ function overlayAccent() {
 /** Drop the cached colour when the theme or accent changes. */
 export function invalidateOverlayAccent() { accentCache = null; }
 
+/**
+ * Corner ticks only.
+ *
+ * This used to stroke a full rounded rectangle behind the ticks as well, so
+ * every object carried two outlines. With several objects in frame that read
+ * as a grid of boxes competing with the words. The ticks alone still say
+ * "this thing, here" — the rectangle was decoration.
+ */
 function drawBox({ x, y, w, h }, fade, accent) {
   ctx.save();
-  ctx.globalAlpha = fade * 0.38;
-  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-  ctx.lineWidth = 1.25;
-  roundRect(x, y, w, h, Math.min(10, w * 0.09, h * 0.09));
-  ctx.stroke();
-
-  // Corner ticks read as a viewfinder without boxing the subject in.
-  ctx.globalAlpha = fade * 0.95;
+  ctx.globalAlpha = fade * 0.9;
   ctx.strokeStyle = accent;
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 2;
   ctx.lineCap = 'round';
-  const L = Math.min(20, w * 0.22, h * 0.22);
+  const L = Math.min(18, w * 0.2, h * 0.2);
   corner(x, y, L, 1, 1);
   corner(x + w, y, L, -1, 1);
   corner(x + w, y + h, L, -1, -1);
@@ -550,18 +547,25 @@ function labelMarkup(t, tr, colorKey) {
     }
   }
 
+  /* The English gloss used to occupy a fourth row on every label. It was the
+     least useful line on screen — the learner is looking straight at the
+     object, so "laptop" tells them nothing they did not already know, and
+     four stacked rows per label turned a busy desk into a wall of text. The
+     gloss still exists, one tap away in the word sheet. What stays here is
+     the part that is actually being taught: the word, how to say it, and how
+     it agrees. */
   return `
     <div class="ar-word" ${rtl ? 'dir="rtl"' : ''}>
+      <span class="em">${esc(tr.em)}</span>
       <span class="w">${esc(tr.word)}</span>
       ${g ? `<span class="g">${esc(g)}</span>` : ''}
     </div>
     ${state.settings.showPhonetics && tr.phonetic ? `<div class="ar-phon">${esc(tr.phonetic)}</div>` : ''}
     ${colorRow}
-    <div class="ar-en">
-      <span class="em">${esc(tr.em)}</span>
-      <span class="txt">${esc(t.cls)}</span>
-      ${state.settings.showConfidence ? `<span class="conf">${Math.round(t.score * 100)}%</span>` : ''}
-    </div>`;
+    ${state.settings.showConfidence
+      ? `<div class="ar-en"><span class="txt">${esc(t.cls)}</span>` +
+        `<span class="conf">${Math.round(t.score * 100)}%</span></div>`
+      : ''}`;
 }
 
 function onLabelTap(node, trackId, cls, tr) {
@@ -574,54 +578,6 @@ function onLabelTap(node, trackId, cls, tr) {
   }
   haptic('light');
   openWordSheet(objId(cls), trackColors.get(trackId) || null);
-}
-
-/* ── Detected strip ───────────────────────────────────────────────────── */
-
-function syncStrip(tracks) {
-  const present = new Set();
-  for (const t of tracks) {
-    if (present.has(t.cls)) continue;
-    present.add(t.cls);
-    const tr = translateItem(objId(t.cls), state.settings.targetLang);
-    if (!tr) continue;
-
-    let card = stripCards.get(t.cls);
-    if (!card) {
-      const cls = t.cls;
-      const trackId = t.id;
-      card = el('button', { class: 'detected-card', type: 'button' });
-      card.addEventListener('click', () => {
-        haptic('light');
-        openWordSheet(objId(cls), trackColors.get(trackId) || null);
-      });
-      strip.append(card);
-      stripCards.set(t.cls, card);
-      // Keep the strip short so it never becomes a wall of cards.
-      while (strip.children.length > 8) {
-        const first = strip.firstElementChild;
-        for (const [k, v] of stripCards) if (v === first) stripCards.delete(k);
-        first.remove();
-      }
-    }
-    const sig = t.cls + '|' + state.settings.targetLang;
-    if (card.dataset.sig !== sig) {
-      card.dataset.sig = sig;
-      card.innerHTML =
-        `<span class="em">${esc(tr.em)}</span>` +
-        `<span class="body"><span class="w">${esc(tr.word)}</span>` +
-        `<span class="e">${esc(t.cls)}</span></span>`;
-    }
-    card.classList.remove('is-stale');
-  }
-  for (const [cls, card] of stripCards) {
-    if (!present.has(cls)) card.classList.add('is-stale');
-  }
-}
-
-function clearStrip() {
-  stripCards.clear();
-  if (strip) strip.innerHTML = '';
 }
 
 /* ── Status pill ──────────────────────────────────────────────────────── */
@@ -639,10 +595,18 @@ function updateStatus(now = performance.now()) {
   state.runtime.detectStats = g;
   // Surfacing the throttle is honest: the user can see the device is the limit
   // rather than assuming detection is broken.
-  const count = liveTracks.length + (focusResult && !liveTracks.some((t) => t.cls === focusResult.key) ? 1 : 0);
-  const label = paused
-    ? 'Paused'
-    : `${count} live · ${state.runtime.fps} fps${g.throttling ? ` · ${g.effectiveHz}Hz` : ''}`;
+  /* The pill used to sit on screen permanently reading "4 live · 60 fps".
+     That is instrumentation, not information: a learner pointing a camera at
+     a cup does not need a frame counter, and it competed for attention with
+     the words, which are the entire point. It now appears only when it has
+     something worth saying — that detection is paused, or that the device is
+     running slower than asked. Everything else stays in Settings. */
+  const label = paused ? 'Paused'
+    : g.throttling ? `Slower device · ${g.effectiveHz} Hz`
+    : '';
+
+  statusPill.classList.toggle('is-shown', !!label);
+  if (!label) return;
   if (statusPill.dataset.txt !== label) {
     statusPill.dataset.txt = label;
     statusPill.innerHTML = `<span class="live-dot"></span><span>${esc(label)}</span>`;
@@ -958,7 +922,6 @@ export function setLanguage(code) {
   if (!LANGUAGES[code]) return;
   setSetting('targetLang', code);
   clearLabels();
-  clearStrip();
   syncLangPill();
   haptic('medium');
   toast(`Now learning ${LANGUAGES[code].name}`, { emoji: LANGUAGES[code].flag });
@@ -1058,7 +1021,6 @@ export function isCameraReady() { return !!stage; }
  */
 export function refreshCameraLanguage() {
   clearLabels();
-  clearStrip();
   syncLangPill();
   palette.reset();
 }
