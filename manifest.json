@@ -1,51 +1,23 @@
 {
-  "name": "Lemma — Learn the world by looking at it",
-  "short_name": "Lemma",
-  "description": "Point your camera at anything and learn what it's called in 12 languages. On-device recognition, pronunciation, grammar and spaced-repetition review. Works offline.",
-  "id": "/lemma/",
+  "name": "LinguaLens — AR Language Learning",
+  "short_name": "LinguaLens",
+  "description": "Point your camera at objects to learn their names in 5 languages. Real-time AR translation powered by AI.",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "fullscreen", "minimal-ui"],
-  "orientation": "any",
-  "background_color": "#F4F1E8",
-  "theme_color": "#F4F1E8",
-  "categories": ["education", "productivity", "utilities"],
+  "orientation": "portrait",
+  "background_color": "#0a0b08",
+  "theme_color": "#8ba339",
+  "categories": ["education", "utilities"],
   "lang": "en",
-  "dir": "ltr",
-  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ],
-  "shortcuts": [
-    {
-      "name": "Open camera",
-      "short_name": "Camera",
-      "description": "Start identifying objects right away",
-      "url": "./index.html#camera"
-    },
-    {
-      "name": "Review due cards",
-      "short_name": "Review",
-      "description": "Study the words that are due today",
-      "url": "./index.html#learn"
-    },
-    {
-      "name": "Progress",
-      "short_name": "Progress",
-      "description": "Streaks, badges and per-language stats",
-      "url": "./index.html#progress"
-    }
-  ]
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
